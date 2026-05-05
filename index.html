@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Playlist AI Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Playfair+Display:italic,wght@700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            scroll-behavior: smooth;
+        }
+        .thumbnail-preview {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            background-color: #1a1a1a;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .thumbnail-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.7));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+        }
+        .thumbnail-text {
+            font-family: 'Playfair Display', 'Noto Sans KR', serif;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            line-height: 1.1;
+            text-shadow: 0 4px 20px rgba(0,0,0,1);
+            word-break: keep-all;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #ff0000;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .lang-btn.active {
+            background: rgba(255, 255, 255, 0.12);
+            border-bottom: 4px solid #ef4444;
+            color: #ef4444;
+        }
+        .thumb-lang-btn.active {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            transform: scale(1.05);
+        }
+        #lyricsDisplay::-webkit-scrollbar {
+            width: 6px;
+        }
+        #lyricsDisplay::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        #lyricsDisplay::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-6xl font-black mb-4 text-white tracking-tighter">
+                GLOBAL <span class="text-red-600">PLAYLIST</span> AI
+            </h1>
+            <p class="text-gray-400 text-lg font-light">초정밀 시장 분석 기반 유튜브 플레이리스트 자동 기획 시스템</p>
+        </header>
+
+        <div class="glass-panel p-8 mb-12 shadow-2xl">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input id="songTitle" type="text" placeholder="기획하고 싶은 무드나 제목을 입력하세요 (예: 비 오는 날 듣기 좋은 시티팝)" 
+                    class="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-red-600/50 text-white text-xl transition-all">
+                <button id="generateBtn" onclick="generateSystem()" class="bg-red-600 hover:bg-red-700 text-white font-black py-5 px-12 rounded-2xl transition-all active:scale-95 shadow-xl shadow-red-900/40">
+                    엔진 가동
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden flex flex-col items-center py-32">
+            <div class="loading-spinner mb-8"></div>
+            <p id="loadingStatus" class="text-2xl text-white font-medium tracking-tight animate-pulse">글로벌 트렌드 데이터 수집 중...</p>
+        </div>
+
+        <div id="resultArea" class="hidden space-y-16">
+            <!-- 1. Thumbnail Preview -->
+            <section id="thumbnailSection">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold flex items-center mb-2"><i class="fas fa-image mr-4 text-red-500"></i> AI 썸네일 마스터</h2>
+                        <p class="text-gray-500 text-sm">타겟 국가별 최적화된 텍스트 오버레이 디자인</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
+                            <button onclick="switchThumbLang('en')" id="tbtn-en" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all active">EN</button>
+                            <button onclick="switchThumbLang('hi')" id="tbtn-hi" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all">HI</button>
+                            <button onclick="switchThumbLang('id')" id="tbtn-id" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all">ID</button>
+                            <button onclick="switchThumbLang('ko')" id="tbtn-ko" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all">KO</button>
+                        </div>
+                        <button onclick="downloadThumbnail()" class="bg-white text-black text-xs font-black py-3 px-6 rounded-xl flex items-center hover:bg-gray-200 transition-all">
+                            <i class="fas fa-save mr-2"></i> 이미지 저장
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <div id="thumbnailContainer" class="thumbnail-preview">
+                            <div class="thumbnail-overlay">
+                                <p class="text-xs tracking-[0.4em] uppercase mb-4 opacity-80 font-bold text-red-500">Premium Curation</p>
+                                <h3 id="overlayText" class="thumbnail-text italic font-black text-white">Loading Title...</h3>
+                                <div class="mt-8 flex items-center gap-4">
+                                    <div class="w-12 h-[2px] bg-red-600"></div>
+                                    <span class="text-xs font-medium tracking-[0.2em] opacity-70">ESSENTIAL GLOBAL MIX</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-8 flex flex-col justify-center space-y-6">
+                        <div class="flex items-center gap-3 text-red-500 font-bold text-lg">
+                            <i class="fas fa-lightbulb"></i>
+                            <h4>디자인 전략</h4>
+                        </div>
+                        <ul id="designStrategy" class="text-sm text-gray-400 space-y-4 leading-relaxed"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Analysis Content -->
+            <section>
+                <h2 class="text-3xl font-bold mb-8 flex items-center"><i class="fas fa-chart-line mr-4 text-emerald-500"></i> 글로벌 TOP 채널 분석</h2>
+                <div id="analysisContent" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </section>
+
+            <!-- 3. Lyrics & Suno Style -->
+            <section>
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold flex items-center mb-2"><i class="fas fa-music mr-4 text-purple-500"></i> 다국어 가사 & 스타일</h2>
+                        <p class="text-gray-500 text-sm">Suno AI 제작을 위한 최적의 롱버전 가사 구성</p>
+                    </div>
+                    <button onclick="copyCurrentLyrics()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-black py-3 px-6 rounded-xl transition-all flex items-center shadow-lg">
+                        <i class="fas fa-copy mr-2"></i> 가사 복사
+                    </button>
+                </div>
+                <div class="glass-panel overflow-hidden">
+                    <div class="flex border-b border-white/10 bg-black/20 overflow-x-auto">
+                        <button id="btn-en" onclick="switchLang('en')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">ENGLISH</button>
+                        <button id="btn-hi" onclick="switchLang('hi')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">HINDI</button>
+                        <button id="btn-id" onclick="switchLang('id')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">INDONESIAN</button>
+                        <button id="btn-ko" onclick="switchLang('ko')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">KOREAN</button>
+                    </div>
+                    <div class="p-8">
+                        <div id="lyricsTitleArea" class="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
+                            <label class="text-[10px] text-purple-400 uppercase font-black block mb-2 tracking-widest">Song Concept</label>
+                            <h3 id="generatedSongTitle" class="text-2xl font-black text-white tracking-tight"></h3>
+                        </div>
+                        <div id="lyricsDisplay" class="h-[500px] overflow-y-auto whitespace-pre-line text-lg leading-relaxed text-gray-300 pr-4"></div>
+                    </div>
+                </div>
+                <div class="mt-6 p-8 bg-gradient-to-br from-purple-900/30 to-blue-900/20 border border-purple-500/20 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
+                    <div>
+                        <span class="text-purple-400 font-black text-xs uppercase tracking-[0.3em] block mb-2">SUNO AI PROMPT STYLE</span>
+                        <p id="sunoStyle" class="text-xl text-white font-bold tracking-tight"></p>
+                    </div>
+                    <button onclick="copyToClipboard('sunoStyle')" class="px-8 py-4 bg-purple-600/40 hover:bg-purple-600/60 rounded-2xl text-xs font-black transition">스타일 복사</button>
+                </div>
+            </section>
+
+            <!-- 4. Video Details & Tags -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="space-y-8">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-3xl font-bold flex items-center"><i class="fas fa-file-alt mr-4 text-orange-500"></i> 영상 최적화 정보</h2>
+                        <button onclick="copyVideoInfo()" class="text-xs font-black bg-orange-600/20 hover:bg-orange-600/40 text-orange-400 px-4 py-2 rounded-xl border border-orange-600/20 transition-all">
+                            전체 복사
+                        </button>
+                    </div>
+                    <div id="videoInfoPanel" class="glass-panel p-10 space-y-8">
+                        <div>
+                            <label class="text-xs text-gray-500 uppercase font-black mb-3 block tracking-widest">Recommended Title</label>
+                            <div class="flex gap-4">
+                                <p id="videoTitle" class="text-2xl font-black text-white flex-1 leading-tight"></p>
+                                <button onclick="copyToClipboard('videoTitle')" class="text-gray-600 hover:text-white transition-colors"><i class="fas fa-copy text-xl"></i></button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 uppercase font-black mb-3 block tracking-widest">Description</label>
+                            <p id="videoDesc" class="text-sm text-gray-400 leading-relaxed"></p>
+                        </div>
+                        <div class="pt-8 border-t border-white/5">
+                            <label class="text-xs text-gray-500 uppercase font-black mb-4 block tracking-widest">Timeline</label>
+                            <div id="timeline" class="text-sm text-gray-500 font-mono space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-8">
+                    <h2 class="text-3xl font-bold flex items-center"><i class="fas fa-hashtag mr-4 text-yellow-500"></i> 검색 엔진 최적화(SEO)</h2>
+                    <div class="glass-panel p-10 flex flex-col justify-between h-full">
+                        <div>
+                            <label class="text-xs text-gray-500 uppercase font-black mb-4 block tracking-widest">Metadata Tags</label>
+                            <div id="tags" class="flex flex-wrap gap-2 mb-10"></div>
+                            
+                            <div class="border-t border-white/10 pt-10">
+                                <h4 class="text-lg font-black text-white mb-2 tracking-tight">태그 활용 가이드</h4>
+                                <p class="text-xs text-gray-500 leading-relaxed">
+                                    상위 노출을 위해 가장 연관성이 높은 태그들이 생성되었습니다. 
+                                    유튜브 스튜디오의 '태그' 섹션에 그대로 붙여넣어 사용하세요. 
+                                    본문의 해시태그로 활용 시 검색 가시성이 극대화됩니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <button onclick="copyTags()" class="mt-12 w-full py-5 bg-white/5 hover:bg-white/10 rounded-2xl font-black text-sm transition-all border border-white/10 shadow-2xl">
+                            <i class="fas fa-copy mr-3"></i> 태그 전체 복사
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Final Export -->
+            <section class="text-center pt-20 pb-20">
+                <div class="inline-flex flex-col items-center gap-6">
+                    <p class="text-gray-600 text-sm italic font-medium">"기획된 리포트는 텍스트 파일로 안전하게 백업하세요"</p>
+                    <button onclick="downloadFullReport()" class="bg-white text-black font-black py-6 px-16 rounded-3xl transition-all flex items-center gap-4 hover:scale-105 shadow-2xl">
+                        <i class="fas fa-file-download text-2xl"></i> 기획 리포트 다운로드 (.txt)
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script type="module">
+        const apiKey = ""; // API Key auto-injected by environment
+
+        // Helper function to clean JSON string from Gemini API
+        function cleanJsonString(str) {
+            return str.replace(/```json|```/g, '').trim();
+        }
+
+        window.generateSystem = async function() {
+            const titleInput = document.getElementById('songTitle').value;
+            if (!titleInput) return;
+
+            const btn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const resultArea = document.getElementById('resultArea');
+            const status = document.getElementById('loadingStatus');
+
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+
+            const systemPrompt = `당신은 전 세계 1억 구독자를 보유한 유튜브 플레이리스트 전략가입니다. 
+            입력 키워드에 대해 전 세계 타겟(영어권, 인도, 동남아, 한국)을 고려한 기획안을 도출하세요.
+            응답은 반드시 순수 JSON 형식이어야 합니다.
+            {
+              "analysis": [{"channel": "채널명", "performance": "데이터 지표", "strategy": "핵심 전략"}],
+              "overlays": {"en": "EN Text", "hi": "HI Text", "id": "ID Text", "ko": "KO Text"},
+              "song_titles": {"en": "EN Title", "hi": "HI Title", "id": "ID Title", "ko": "KO Title"},
+              "lyrics": {"en": "Verse/Chorus...", "hi": "...", "id": "...", "ko": "..."},
+              "suno": {"style": "Suno Prompt", "tags": "Style Tags"},
+              "video": {"title": "Full YT Title", "desc": "Desc text", "timeline": ["00:00 Intro", "..."]},
+              "keywords": ["tag1", "tag2"],
+              "image_prompt": "Imagen 4.0용 영문 고퀄리티 썸네일 프롬프트 (High-end photography, no text, aesthetic)",
+              "design_tips": ["팁1", "팁2"]
+            }
+            lyrics는 Intro, Verse, Pre-Chorus, Chorus를 포함한 최소 2분 이상의 롱버전이어야 합니다.`;
+
+            try {
+                status.innerText = "글로벌 플레이리스트 데이터 분석 중...";
+                
+                const textRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `키워드: ${titleInput}` }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!textRes.ok) throw new Error('텍스트 생성 API 호출 실패');
+                
+                const textData = await textRes.json();
+                const rawText = textData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawText) throw new Error('API 응답에서 텍스트를 찾을 수 없습니다.');
+                
+                const cleanedText = cleanJsonString(rawText);
+                const result = JSON.parse(cleanedText);
+
+                status.innerText = "초고화질 AI 썸네일 배경 렌더링 중...";
+                
+                const imageRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [{ prompt: result.image_prompt || `High-end aesthetic photography for ${titleInput}, cinematic lighting, 8k resolution` }],
+                        parameters: { sampleCount: 1 }
+                    })
+                });
+
+                let imageUrl = "";
+                if (imageRes.ok) {
+                    const imageData = await imageRes.json();
+                    if (imageData.predictions?.[0]?.bytesBase64Encoded) {
+                        imageUrl = `data:image/png;base64,${imageData.predictions[0].bytesBase64Encoded}`;
+                    }
+                }
+
+                // Fallback background if image generation fails
+                if (!imageUrl) {
+                    imageUrl = "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070&auto=format&fit=crop";
+                }
+
+                renderResult(result, imageUrl);
+            } catch (error) {
+                console.error('Error Details:', error);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = "fixed top-5 right-5 bg-red-600 text-white p-4 rounded-xl shadow-2xl z-[100]";
+                errorMsg.innerText = "오류 발생: " + error.message;
+                document.body.appendChild(errorMsg);
+                setTimeout(() => errorMsg.remove(), 5000);
+            } finally {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        let currentLyrics = {};
+        let currentSongTitles = {};
+        let currentOverlays = {};
+        let fullData = {};
+
+        function renderResult(data, imageUrl) {
+            fullData = data;
+            const resultArea = document.getElementById('resultArea');
+            resultArea.classList.remove('hidden');
+            
+            currentOverlays = data.overlays || {};
+            const thumbContainer = document.getElementById('thumbnailContainer');
+            thumbContainer.style.backgroundImage = `url('${imageUrl}')`;
+            switchThumbLang('en'); 
+
+            document.getElementById('designStrategy').innerHTML = (data.design_tips || []).map(tip => `<li>• ${tip}</li>`).join('');
+            
+            const analysisContent = document.getElementById('analysisContent');
+            analysisContent.innerHTML = (data.analysis || []).map(a => `
+                <div class="glass-panel p-6 border-l-4 border-emerald-500 shadow-xl transition-transform hover:-translate-y-1">
+                    <p class="text-xs text-emerald-500 font-black mb-1">${a.channel}</p>
+                    <h5 class="font-bold text-white mb-3">${a.performance}</h5>
+                    <p class="text-xs text-gray-400 leading-relaxed">${a.strategy}</p>
+                </div>
+            `).join('');
+
+            currentLyrics = data.lyrics || {};
+            currentSongTitles = data.song_titles || {};
+            switchLang('en');
+
+            const sunoStyle = document.getElementById('sunoStyle');
+            sunoStyle.innerText = `${data.suno?.style || ''} | ${data.suno?.tags || ''}`;
+            
+            document.getElementById('videoTitle').innerText = data.video?.title || '';
+            document.getElementById('videoDesc').innerText = data.video?.desc || '';
+            
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = (data.video?.timeline || []).map(t => `<p>${t}</p>`).join('');
+            
+            const tags = document.getElementById('tags');
+            tags.innerHTML = (data.keywords || []).map(k => `<span class="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium">#${k}</span>`).join('');
+            
+            setTimeout(() => {
+                window.scrollTo({ top: resultArea.offsetTop - 40, behavior: 'smooth' });
+            }, 300);
+        }
+
+        window.switchThumbLang = (lang) => {
+            document.querySelectorAll('.thumb-lang-btn').forEach(b => b.classList.toggle('active', b.id === `tbtn-${lang}`));
+            const overlayText = document.getElementById('overlayText');
+            overlayText.innerText = currentOverlays[lang] || '';
+        };
+
+        window.switchLang = (lang) => {
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${lang}`));
+            document.getElementById('generatedSongTitle').innerText = currentSongTitles[lang] || '';
+            document.getElementById('lyricsDisplay').innerText = currentLyrics[lang] || '';
+        };
+
+        window.downloadThumbnail = () => {
+            const container = document.getElementById('thumbnailContainer');
+            html2canvas(container, { useCORS: true, scale: 3 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Playlist_Thumb_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        };
+
+        window.downloadFullReport = () => {
+            if (!fullData || !fullData.video) return;
+            let r = `[GLOBAL PLAYLIST AI REPORT]\n\nGENERATE DATE: ${new Date().toLocaleString()}\n`;
+            r += `RECOMMENDED TITLE: ${fullData.video.title}\n`;
+            r += `DESCRIPTION: ${fullData.video.desc}\n\n`;
+            r += `--- LYRICS SELECTION ---\n`;
+            ['en', 'hi', 'id', 'ko'].forEach(l => {
+                r += `[${l.toUpperCase()}]\nTITLE: ${fullData.song_titles?.[l] || 'N/A'}\n${fullData.lyrics?.[l] || 'N/A'}\n\n`;
+            });
+            r += `--- SUNO AI STYLE ---\n${fullData.suno?.style || 'N/A'}\nTAGS: ${fullData.suno?.tags || 'N/A'}\n`;
+            
+            const blob = new Blob([r], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `AI_Playlist_Report.txt`;
+            link.click();
+        };
+
+        window.copyTextToClipboard = (text) => {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            const toast = document.createElement('div');
+            toast.innerText = "복사되었습니다";
+            toast.className = "fixed bottom-12 right-12 bg-red-600 text-white px-8 py-4 rounded-2xl shadow-2xl z-50 font-black animate-bounce";
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        };
+
+        window.copyCurrentLyrics = () => {
+            const lyrics = document.getElementById('lyricsDisplay').innerText;
+            if (lyrics) window.copyTextToClipboard(lyrics);
+        };
+        
+        window.copyVideoInfo = () => {
+            const title = document.getElementById('videoTitle').innerText;
+            const desc = document.getElementById('videoDesc').innerText;
+            if (title || desc) window.copyTextToClipboard(`${title}\n\n${desc}`);
+        };
+        
+        window.copyTags = () => {
+            const tags = Array.from(document.querySelectorAll('#tags span')).map(s => s.innerText).join(' ');
+            if (tags) window.copyTextToClipboard(tags);
+        };
+        
+        window.copyToClipboard = (id) => {
+            const el = document.getElementById(id);
+            if (el) window.copyTextToClipboard(el.innerText);
+        };
+    </script>
+</body>
+</html>
