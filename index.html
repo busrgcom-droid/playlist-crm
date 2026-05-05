@@ -29,7 +29,7 @@
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             background-color: #1a1a1a;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: background-image 0.8s ease-in-out;
         }
         .thumbnail-overlay {
             position: absolute;
@@ -118,7 +118,7 @@
                 <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
                     <div>
                         <h2 class="text-3xl font-bold flex items-center mb-2"><i class="fas fa-image mr-4 text-red-500"></i> AI 썸네일 마스터</h2>
-                        <p class="text-gray-500 text-sm">타겟 국가별 최적화된 텍스트 오버레이 디자인</p>
+                        <p class="text-gray-500 text-sm">곡의 무드를 완벽하게 반영한 고급 썸네일 디자인</p>
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
@@ -282,7 +282,7 @@
             resultArea.classList.add('hidden');
 
             const systemPrompt = `당신은 전 세계 1억 구독자를 보유한 유튜브 플레이리스트 전략가입니다. 
-            입력 키워드에 대해 전 세계 타겟(영어권, 인도, 동남아, 한국)을 고려한 기획안을 도출하세요.
+            사용자가 입력한 곡의 주제(무드, 장르 등)를 시각적, 청각적으로 완벽하게 분석하여 기획안을 도출하세요.
             응답은 반드시 순수 JSON 형식이어야 합니다.
             {
               "analysis": [{"channel": "채널명", "performance": "데이터 지표", "strategy": "핵심 전략"}],
@@ -292,8 +292,8 @@
               "suno": {"style": "Suno Prompt", "tags": "Style Tags"},
               "video": {"title": "Full YT Title", "desc": "Desc text", "timeline": ["00:00 Intro", "..."]},
               "keywords": ["tag1", "tag2"],
-              "image_prompt": "Imagen 4.0용 영문 고퀄리티 썸네일 프롬프트 (High-end photography, no text, aesthetic)",
-              "design_tips": ["팁1", "팁2"]
+              "image_prompt": "사용자가 입력한 곡의 무드를 직관적으로 보여주는 매우 구체적인 씬(Scene) 묘사 영문 프롬프트. 반드시 '구체적인 장소, 시간대, 날씨, 핵심 피사체'를 명확히 포함할 것 (예: 'Raindrops on a cozy cafe window, a warm cup of coffee on a wooden table, blurry neon city lights at night'). 추상적인 디자인 팁이 아닌 철저한 '상황 묘사'여야 합니다. 시작은 반드시 'Photorealistic high quality photography, shot on 35mm lens, DSLR'로 하고, 끝은 'cinematic lighting, empty space, absolutely no text, no watermark'로 작성할 것.",
+              "design_tips": ["썸네일 톤앤매너 팁", "구체적인 배경 이미지 구성 팁"]
             }
             lyrics는 Intro, Verse, Pre-Chorus, Chorus를 포함한 최소 2분 이상의 롱버전이어야 합니다.`;
 
@@ -319,28 +319,59 @@
                 const cleanedText = cleanJsonString(rawText);
                 const result = JSON.parse(cleanedText);
 
-                status.innerText = "초고화질 AI 썸네일 배경 렌더링 중...";
+                status.innerText = "곡 테마에 완벽히 몰입된 실사 씬(Scene) 렌더링 중...";
                 
-                const imageRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        instances: [{ prompt: result.image_prompt || `High-end aesthetic photography for ${titleInput}, cinematic lighting, 8k resolution` }],
-                        parameters: { sampleCount: 1 }
-                    })
-                });
+                // AI가 기획한 구체적인 씬(Scene) 묘사에 최고 품질 옵션을 추가
+                const baseImagePrompt = result.image_prompt || titleInput;
+                const enhancedPrompt = `${baseImagePrompt}, masterpiece, 8k resolution, highly detailed, perfect composition, aesthetic wallpaper, absolutely no text, no words, no letters, no watermark`;
 
                 let imageUrl = "";
-                if (imageRes.ok) {
-                    const imageData = await imageRes.json();
-                    if (imageData.predictions?.[0]?.bytesBase64Encoded) {
-                        imageUrl = `data:image/png;base64,${imageData.predictions[0].bytesBase64Encoded}`;
+                
+                // 1차 시도: 구글 메인 이미지 AI 엔진 (Imagen)
+                try {
+                    const imageRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            instances: { prompt: enhancedPrompt },
+                            parameters: { sampleCount: 1 }
+                        })
+                    });
+
+                    if (imageRes.ok) {
+                        const imageData = await imageRes.json();
+                        if (imageData.predictions?.[0]?.bytesBase64Encoded) {
+                            imageUrl = `data:image/png;base64,${imageData.predictions[0].bytesBase64Encoded}`;
+                        }
+                    } else {
+                        // 객체 형태가 실패할 경우 배열 형태로 재시도
+                        const imageRes2 = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                instances: [{ prompt: enhancedPrompt }],
+                                parameters: { sampleCount: 1 }
+                            })
+                        });
+                        if (imageRes2.ok) {
+                             const imageData2 = await imageRes2.json();
+                             if (imageData2.predictions?.[0]?.bytesBase64Encoded) {
+                                 imageUrl = `data:image/png;base64,${imageData2.predictions[0].bytesBase64Encoded}`;
+                             }
+                        }
                     }
+                } catch(imgErr) {
+                    console.error("Image API request failed", imgErr);
                 }
 
-                // Fallback background if image generation fails
+                // [핵심 해결책] 2차 시도 (Bulletproof Fallback)
+                // 구글 이미지 API가 안전 필터나 트래픽으로 거부할 경우, 
+                // 무작위 사진이 아닌 'AI 이미지 전용 서브 엔진(Pollinations)'으로 기획된 프롬프트를 그대로 넘겨 생성.
                 if (!imageUrl) {
-                    imageUrl = "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070&auto=format&fit=crop";
+                    console.log("메인 엔진 지연으로 서브 AI 이미지 엔진을 가동합니다.");
+                    // 서브 엔진용 프롬프트 최적화
+                    const fallbackPrompt = encodeURIComponent(`${baseImagePrompt}, photorealistic, aesthetic, cinematic, no text, masterpiece`);
+                    imageUrl = `https://image.pollinations.ai/prompt/${fallbackPrompt}?width=1600&height=900&nologo=true`;
                 }
 
                 renderResult(result, imageUrl);
@@ -348,7 +379,7 @@
                 console.error('Error Details:', error);
                 const errorMsg = document.createElement('div');
                 errorMsg.className = "fixed top-5 right-5 bg-red-600 text-white p-4 rounded-xl shadow-2xl z-[100]";
-                errorMsg.innerText = "오류 발생: " + error.message;
+                errorMsg.innerText = "오류 발생: 잠시 후 다시 시도해주세요.";
                 document.body.appendChild(errorMsg);
                 setTimeout(() => errorMsg.remove(), 5000);
             } finally {
