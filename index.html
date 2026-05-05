@@ -263,11 +263,6 @@
     <script type="module">
         const apiKey = "AIzaSyBXMmdT1dbzb4bnJFurKuBoc3yQ21pOtbQ"; // API Key auto-injected by environment
 
-        // Helper function to clean JSON string from Gemini API
-        function cleanJsonString(str) {
-            return str.replace(/```json|```/g, '').trim();
-        }
-
         window.generateSystem = async function() {
             const titleInput = document.getElementById('songTitle').value;
             if (!titleInput) return;
@@ -283,19 +278,9 @@
 
             const systemPrompt = `당신은 전 세계 1억 구독자를 보유한 유튜브 플레이리스트 전략가입니다. 
             사용자가 입력한 곡의 주제(무드, 장르 등)를 시각적, 청각적으로 완벽하게 분석하여 기획안을 도출하세요.
-            응답은 반드시 순수 JSON 형식이어야 합니다.
-            {
-              "analysis": [{"channel": "채널명", "performance": "데이터 지표", "strategy": "핵심 전략"}],
-              "overlays": {"en": "EN Text", "hi": "HI Text", "id": "ID Text", "ko": "KO Text"},
-              "song_titles": {"en": "EN Title", "hi": "HI Title", "id": "ID Title", "ko": "KO Title"},
-              "lyrics": {"en": "Verse/Chorus...", "hi": "...", "id": "...", "ko": "..."},
-              "suno": {"style": "Suno Prompt", "tags": "Style Tags"},
-              "video": {"title": "Full YT Title", "desc": "Desc text", "timeline": ["00:00 Intro", "..."]},
-              "keywords": ["tag1", "tag2"],
-              "image_prompt": "사용자가 입력한 곡의 무드를 직관적으로 보여주는 매우 구체적인 씬(Scene) 묘사 영문 프롬프트. 반드시 '구체적인 장소, 시간대, 날씨, 핵심 피사체'를 명확히 포함할 것 (예: 'Raindrops on a cozy cafe window, a warm cup of coffee on a wooden table, blurry neon city lights at night'). 추상적인 디자인 팁이 아닌 철저한 '상황 묘사'여야 합니다. 시작은 반드시 'Photorealistic high quality photography, shot on 35mm lens, DSLR'로 하고, 끝은 'cinematic lighting, empty space, absolutely no text, no watermark'로 작성할 것.",
-              "design_tips": ["썸네일 톤앤매너 팁", "구체적인 배경 이미지 구성 팁"]
-            }
-            lyrics는 Intro, Verse, Pre-Chorus, Chorus를 포함한 최소 2분 이상의 롱버전이어야 합니다.`;
+            응답은 제공된 JSON 스키마를 엄격하게 준수해야 합니다.
+            - lyrics는 Intro, Verse, Pre-Chorus, Chorus를 포함한 최소 2분 이상의 롱버전으로 상세하게 작성하세요.
+            - image_prompt는 곡의 무드를 직관적으로 보여주는 매우 구체적인 씬(Scene) 묘사 영문 프롬프트여야 합니다. 반드시 '구체적인 장소, 시간대, 날씨, 핵심 피사체'를 명확히 포함하세요 (예: Raindrops on a cozy cafe window, a warm cup of coffee on a wooden table, blurry neon city lights at night). 추상적인 디자인 팁이 아닌 철저한 '상황 묘사'여야 합니다. 시작은 반드시 'Photorealistic high quality photography, shot on 35mm lens, DSLR'로 하고, 끝은 'cinematic lighting, empty space, absolutely no text, no watermark'로 작성하세요.`;
 
             try {
                 status.innerText = "글로벌 플레이리스트 데이터 분석 중...";
@@ -306,18 +291,43 @@
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: `키워드: ${titleInput}` }] }],
                         systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { responseMimeType: "application/json" }
+                        generationConfig: { 
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    analysis: { type: "ARRAY", items: { type: "OBJECT", properties: { channel: { type: "STRING" }, performance: { type: "STRING" }, strategy: { type: "STRING" } } } },
+                                    overlays: { type: "OBJECT", properties: { en: { type: "STRING" }, hi: { type: "STRING" }, id: { type: "STRING" }, ko: { type: "STRING" } } },
+                                    song_titles: { type: "OBJECT", properties: { en: { type: "STRING" }, hi: { type: "STRING" }, id: { type: "STRING" }, ko: { type: "STRING" } } },
+                                    lyrics: { type: "OBJECT", properties: { en: { type: "STRING" }, hi: { type: "STRING" }, id: { type: "STRING" }, ko: { type: "STRING" } } },
+                                    suno: { type: "OBJECT", properties: { style: { type: "STRING" }, tags: { type: "STRING" } } },
+                                    video: { type: "OBJECT", properties: { title: { type: "STRING" }, desc: { type: "STRING" }, timeline: { type: "ARRAY", items: { type: "STRING" } } }, required: ["title", "desc", "timeline"] },
+                                    keywords: { type: "ARRAY", items: { type: "STRING" } },
+                                    image_prompt: { type: "STRING" },
+                                    design_tips: { type: "ARRAY", items: { type: "STRING" } }
+                                },
+                                required: ["analysis", "overlays", "song_titles", "lyrics", "suno", "video", "keywords", "image_prompt", "design_tips"]
+                            },
+                            maxOutputTokens: 8192
+                        }
                     })
                 });
 
-                if (!textRes.ok) throw new Error('텍스트 생성 API 호출 실패');
+                if (!textRes.ok) {
+                    const errText = await textRes.text();
+                    throw new Error(`API 연결 실패 (${textRes.status}): 깃허브 등 외부 실행 시 apiKey를 입력하셔야 합니다.`);
+                }
                 
                 const textData = await textRes.json();
-                const rawText = textData.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!rawText) throw new Error('API 응답에서 텍스트를 찾을 수 없습니다.');
-                
-                const cleanedText = cleanJsonString(rawText);
-                const result = JSON.parse(cleanedText);
+                let result;
+                try {
+                    const rawText = textData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                    const cleanedText = rawText.replace(/```json|```/g, '').trim();
+                    result = JSON.parse(cleanedText);
+                } catch (parseError) {
+                    console.error("JSON 파싱 에러. 원본 텍스트:", textData);
+                    throw new Error('데이터 처리 중 오류가 발생했습니다. 다시 버튼을 눌러주세요.');
+                }
 
                 status.innerText = "곡 테마에 완벽히 몰입된 실사 씬(Scene) 렌더링 중...";
                 
@@ -364,12 +374,9 @@
                     console.error("Image API request failed", imgErr);
                 }
 
-                // [핵심 해결책] 2차 시도 (Bulletproof Fallback)
-                // 구글 이미지 API가 안전 필터나 트래픽으로 거부할 경우, 
-                // 무작위 사진이 아닌 'AI 이미지 전용 서브 엔진(Pollinations)'으로 기획된 프롬프트를 그대로 넘겨 생성.
+                // 2차 시도 (Bulletproof Fallback)
                 if (!imageUrl) {
                     console.log("메인 엔진 지연으로 서브 AI 이미지 엔진을 가동합니다.");
-                    // 서브 엔진용 프롬프트 최적화
                     const fallbackPrompt = encodeURIComponent(`${baseImagePrompt}, photorealistic, aesthetic, cinematic, no text, masterpiece`);
                     imageUrl = `https://image.pollinations.ai/prompt/${fallbackPrompt}?width=1600&height=900&nologo=true`;
                 }
@@ -378,10 +385,10 @@
             } catch (error) {
                 console.error('Error Details:', error);
                 const errorMsg = document.createElement('div');
-                errorMsg.className = "fixed top-5 right-5 bg-red-600 text-white p-4 rounded-xl shadow-2xl z-[100]";
-                errorMsg.innerText = "오류 발생: 잠시 후 다시 시도해주세요.";
+                errorMsg.className = "fixed top-5 right-5 bg-red-600 text-white p-5 rounded-xl shadow-2xl z-[100] font-bold";
+                errorMsg.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${error.message}`;
                 document.body.appendChild(errorMsg);
-                setTimeout(() => errorMsg.remove(), 5000);
+                setTimeout(() => errorMsg.remove(), 6000);
             } finally {
                 loading.classList.add('hidden');
                 btn.disabled = false;
