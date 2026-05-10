@@ -1,559 +1,990 @@
-<!DOCTYPE html>
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>플레이리스트 AI 스튜디오</title><style>*{margin:0;padding:0;box-sizing:border-box}body{  background:#050505;color:#fff;font-family:Arial,"Noto Sans KR",sans-serif;min-height:100vh;  background-image:radial-gradient(circle at top left,rgba(147,51,234,.25),transparent 30%),  radial-gradient(circle at bottom right,rgba(6,182,212,.2),transparent 30%);}.container{width:100%;max-width:1450px;margin:auto;padding:20px}.header{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.1)}.logo{font-size:40px;font-weight:900}.subtitle{color:#aaa;margin-top:8px}.status{background:rgba(59,130,246,.2);color:#93c5fd;padding:12px 20px;border-radius:999px;font-size:14px}.layout{display:grid;grid-template-columns:1.05fr 1fr;gap:24px;margin-top:30px}.card{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);border-radius:28px;padding:28px;backdrop-filter:blur(12px)}.card-title{font-size:30px;font-weight:800;margin-bottom:10px}.card-desc{color:#aaa;margin-bottom:28px}.label{display:block;margin:18px 0 12px;color:#ddd;font-weight:700}.input,.select{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:#fff;padding:18px;border-radius:18px;font-size:16px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.btn{  background:rgba(255,255,255,.08);border:none;color:#fff;padding:15px;border-radius:16px;cursor:pointer;  transition:.2s;font-size:15px;font-weight:700}.btn:hover{background:rgba(147,51,234,.45)}.btn.active{background:#9333ea}.generate-btn{  width:100%;border:none;margin-top:24px;padding:20px;border-radius:20px;font-size:20px;font-weight:900;color:#fff;cursor:pointer;  background:linear-gradient(90deg,#9333ea,#06b6d4)}.copy-btn,.download-btn{  border:none;background:rgba(6,182,212,.25);color:#dffbff;padding:9px 13px;border-radius:12px;cursor:pointer;font-weight:800;margin-left:8px}.copy-btn:hover,.download-btn:hover{background:rgba(6,182,212,.45)}.copy-btn.ok{background:rgba(34,197,94,.45);color:#dcfce7}.preview-head{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px;color:#bbb}.preview-box{background:rgba(0,0,0,.45);border-radius:18px;padding:18px;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);line-height:1.65}.thumbnail-wrap{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:16px;margin-bottom:16px}canvas{width:100%;border-radius:20px;border:1px solid rgba(255,255,255,.12);display:block}.tags{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.tag{background:rgba(147,51,234,.3);padding:10px 14px;border-radius:999px;font-size:14px}.lyrics{white-space:pre-line;max-height:460px;overflow:auto}.lang-block{margin-bottom:18px}.small{font-size:13px;color:#aaa;margin-top:12px;line-height:1.6}.copy-all-row{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.copy-all-row .copy-btn{margin-left:0}@media(max-width:1000px){.layout{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(3,1fr)}.header{flex-direction:column;align-items:flex-start;gap:12px}}@media(max-width:560px){.grid2,.grid3,.grid5{grid-template-columns:1fr}.logo{font-size:30px}}</style></head><body><div class="container">  <div class="header">    <div>      <div class="logo">플레이리스트 AI 스튜디오</div>      <div class="subtitle">제목 의미 기반 가사 · SUNO 스타일 · 썸네일 · 키워드 자동 생성</div>    </div>    <div id="modeStatus" class="status">오프라인 모드</div>  </div>  <div class="layout">    <div class="card">      <div class="card-title">바이럴 플레이리스트 제작</div>      <div class="card-desc">곡 제목의 뜻을 분석해서 제목과 어울리는 3분 이상 다국어 가사를 생성합니다.</div>      <label class="label">곡 제목</label>      <input id="songTitle" class="input" placeholder="예시: Midnight Rain / Broken Heart / 고향역 / 첫사랑">      <label class="label">분위기 선택</label>      <div class="grid3" id="moodGroup">        <button class="btn active" data-value="심야 드라이브">심야 드라이브</button>        <button class="btn" data-value="감성 슬픔">감성 슬픔</button>        <button class="btn" data-value="로파이">로파이</button>        <button class="btn" data-value="감성 무드">감성 무드</button>        <button class="btn" data-value="K-POP">K-POP</button>        <button class="btn" data-value="트롯">트롯</button>      </div>      <label class="label">템포 선택</label>      <div class="grid5" id="tempoGroup">        <button class="btn" data-value="80 BPM">80 BPM</button>        <button class="btn active" data-value="90 BPM">90 BPM</button>        <button class="btn" data-value="120 BPM">120 BPM</button>        <button class="btn" data-value="130 BPM">130 BPM</button>        <button class="btn" data-value="158 BPM">158 BPM</button>      </div>      <label class="label">보컬 선택</label>      <div class="grid2" id="vocalGroup">        <button class="btn active" data-value="여성 보컬">여성 보컬</button>        <button class="btn" data-value="남성 보컬">남성 보컬</button>      </div>      <label class="label">플레이리스트 길이</label>      <select id="playlistLength" class="select">        <option>30분</option>        <option selected>1시간</option>        <option>2시간</option>        <option>3시간</option>      </select>      <label class="label">실행 모드</label>      <div class="grid2" id="modeGroup">        <button class="btn active" data-value="offline">오프라인 모드</button>        <button class="btn" data-value="online">온라인 AI 모드</button>      </div>      <button id="generateBtn" class="generate-btn">전체 플레이리스트 자동 생성</button>      <div class="small">온라인 AI 모드는 FastAPI 서버가 켜져 있어야 합니다. 주소: http://127.0.0.1:8000</div>    </div>    <div class="card">      <div class="card-title">AI 결과 미리보기</div>      <div class="copy-all-row">        <button class="copy-btn" data-copy="allText">전체 결과 복사</button>        <button class="copy-btn" data-copy="allLyricsText">전체 가사 복사</button>      </div>      <div class="preview-head"><span>제목 분석</span><button class="copy-btn" data-copy="titleAnalysis">분석 복사</button></div>      <div class="preview-box" id="titleAnalysis">생성 대기 중...</div>      <div class="preview-head"><span>플레이리스트 제목</span><button class="copy-btn" data-copy="playlistTitle">제목 복사</button></div>      <div class="preview-box" id="playlistTitle">생성 대기 중...</div>      <div class="preview-head">        <span>썸네일 사진</span>        <div>          <button class="copy-btn" id="copyThumbnailBtn">이미지 복사</button>          <button class="download-btn" id="downloadThumbnailBtn">PNG 다운로드</button>        </div>      </div>      <div class="thumbnail-wrap"><canvas id="thumbnailCanvas" width="1280" height="720"></canvas></div>      <div class="preview-head"><span>썸네일 문구</span><button class="copy-btn" data-copy="thumbnailText">썸네일 문구 복사</button></div>      <div class="preview-box" id="thumbnailText">생성 대기 중...</div>      <div class="preview-head"><span>SUNO 스타일</span><button class="copy-btn" data-copy="sunoPrompt">SUNO 스타일 복사</button></div>      <div class="preview-box" id="sunoPrompt">생성 대기 중...</div>      <div class="preview-head"><span>키워드</span><button class="copy-btn" data-copy="keywordsText">키워드 복사</button></div>      <div class="tags" id="keywords"></div>      <div id="keywordsText" style="display:none"></div>      <div class="preview-head"><span>영어 가사</span><button class="copy-btn" data-copy="lyricsEn">영어 복사</button></div>      <div class="preview-box lyrics lang-block" id="lyricsEn">생성 대기 중...</div>      <div class="preview-head"><span>힌두어 가사</span><button class="copy-btn" data-copy="lyricsHi">힌두어 복사</button></div>      <div class="preview-box lyrics lang-block" id="lyricsHi">생성 대기 중...</div>      <div class="preview-head"><span>인도네시아어 가사</span><button class="copy-btn" data-copy="lyricsId">인도네시아어 복사</button></div>      <div class="preview-box lyrics lang-block" id="lyricsId">생성 대기 중...</div>      <div class="preview-head"><span>한국어 가사</span><button class="copy-btn" data-copy="lyricsKo">한국어 복사</button></div>      <div class="preview-box lyrics lang-block" id="lyricsKo">생성 대기 중...</div>      <div id="allLyricsText" style="display:none"></div>      <div id="allText" style="display:none"></div>    </div>  </div></div><script>const API_URL = 'http://127.0.0.1:8000/api/generate';const state = {  mood: '심야 드라이브',  tempo: '90 BPM',  vocal: '여성 보컬',  mode: 'offline',  last: {}};function selectButton(groupId, key) {  document.getElementById(groupId).addEventListener('click', function(e) {    const btn = e.target.closest('button');    if (!btn) return;    [...this.querySelectorAll('button')].forEach(b => b.classList.remove('active'));    btn.classList.add('active');    state[key] = btn.dataset.value;    if (key === 'mode') {      document.getElementById('modeStatus').innerText =        state.mode === 'online' ? '온라인 AI 모드' : '오프라인 모드';    }  });}function cleanTitle(title) {  return (title || 'Midnight Rain').trim();}function includesAny(text, words) {  return words.some(w => text.includes(w));}function splitTitleWords(title) {  return cleanTitle(title)    .replace(/[^\w가-힣\s]/g, ' ')    .split(/\s+/)    .filter(Boolean);}function analyzeTitle(title) {  const raw = cleanTitle(title);  const lower = raw.toLowerCase();  const words = splitTitleWords(raw);  let coreSymbol = raw;  let theme = `"${raw}"라는 제목 자체가 가진 감정`;  let conflict = '말하지 못한 마음과 다시 떠오르는 기억';  let resolution = '그 제목을 부르며 마음을 인정하고 앞으로 나아가는 것';  let place = '제목이 떠오르는 밤의 한 장면';  let object = '제목을 상징하는 작은 흔적';  let emotion = '깊은 그리움';  let image = '어두운 배경, 제목을 중심으로 번지는 감정';  if (includesAny(lower, ['rain', '비', '빗', '장마', 'storm', 'shower'])) {    coreSymbol = '비';    theme = `"${raw}"는 비가 내릴 때 다시 살아나는 그리움`;    conflict = '비가 올 때마다 잊은 줄 알았던 사람이 다시 떠오르는 마음';    resolution = '빗속에서 그 사람을 보내며 스스로를 위로하는 것';    place = '비 내리는 거리와 젖은 창문 앞';  <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Playlist AI Engine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Playfair+Display:italic,wght@700&display=swap');
-        
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #0f0f0f;
-            color: #ffffff;
-            scroll-behavior: smooth;
-        }
-        .thumbnail-preview {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background-size: cover;
-            background-position: center;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            background-color: #1a1a1a;
-            transition: background-image 0.8s ease-in-out;
-        }
-        .thumbnail-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.7));
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 40px;
-        }
-        .thumbnail-text {
-            font-family: 'Playfair Display', 'Noto Sans KR', serif;
-            font-size: clamp(1.8rem, 5vw, 3rem);
-            line-height: 1.1;
-            text-shadow: 0 4px 20px rgba(0,0,0,1);
-            word-break: keep-all;
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-        }
-        .loading-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #ff0000;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .lang-btn.active {
-            background: rgba(255, 255, 255, 0.12);
-            border-bottom: 4px solid #ef4444;
-            color: #ef4444;
-        }
-        .thumb-lang-btn.active {
-            background: #ef4444;
-            color: white;
-            border-color: #ef4444;
-            transform: scale(1.05);
-        }
-        #lyricsDisplay::-webkit-scrollbar {
-            width: 6px;
-        }
-        #lyricsDisplay::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.2);
-        }
-        #lyricsDisplay::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.15);
-            border-radius: 10px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>플레이리스트 AI 스튜디오</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#050505;color:#fff;font-family:Arial,"Noto Sans KR",sans-serif;min-height:100vh;
+  background-image:radial-gradient(circle at top left,rgba(147,51,234,.25),transparent 30%),
+  radial-gradient(circle at bottom right,rgba(6,182,212,.2),transparent 30%);
+}
+.container{width:100%;max-width:1450px;margin:auto;padding:20px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.logo{font-size:40px;font-weight:900}.subtitle{color:#aaa;margin-top:8px}
+.status{background:rgba(59,130,246,.2);color:#93c5fd;padding:12px 20px;border-radius:999px;font-size:14px}
+.layout{display:grid;grid-template-columns:1.05fr 1fr;gap:24px;margin-top:30px}
+.card{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);border-radius:28px;padding:28px;backdrop-filter:blur(12px)}
+.card-title{font-size:30px;font-weight:800;margin-bottom:10px}.card-desc{color:#aaa;margin-bottom:28px}
+.label{display:block;margin:18px 0 12px;color:#ddd;font-weight:700}
+.input,.select{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);color:#fff;padding:18px;border-radius:18px;font-size:16px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.btn{
+  background:rgba(255,255,255,.08);border:none;color:#fff;padding:15px;border-radius:16px;cursor:pointer;
+  transition:.2s;font-size:15px;font-weight:700
+}
+.btn:hover{background:rgba(147,51,234,.45)}.btn.active{background:#9333ea}
+.generate-btn{
+  width:100%;border:none;margin-top:24px;padding:20px;border-radius:20px;font-size:20px;font-weight:900;color:#fff;cursor:pointer;
+  background:linear-gradient(90deg,#9333ea,#06b6d4)
+}
+.copy-btn,.download-btn{
+  border:none;background:rgba(6,182,212,.25);color:#dffbff;padding:9px 13px;border-radius:12px;cursor:pointer;font-weight:800;margin-left:8px
+}
+.copy-btn:hover,.download-btn:hover{background:rgba(6,182,212,.45)}
+.copy-btn.ok{background:rgba(34,197,94,.45);color:#dcfce7}
+.preview-head{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px;color:#bbb}
+.preview-box{background:rgba(0,0,0,.45);border-radius:18px;padding:18px;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);line-height:1.65}
+.thumbnail-wrap{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:16px;margin-bottom:16px}
+canvas{width:100%;border-radius:20px;border:1px solid rgba(255,255,255,.12);display:block}
+.tags{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}.tag{background:rgba(147,51,234,.3);padding:10px 14px;border-radius:999px;font-size:14px}
+.lyrics{white-space:pre-line;max-height:460px;overflow:auto}
+.lang-block{margin-bottom:18px}
+.small{font-size:13px;color:#aaa;margin-top:12px;line-height:1.6}
+.copy-all-row{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.copy-all-row .copy-btn{margin-left:0}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(3,1fr)}.header{flex-direction:column;align-items:flex-start;gap:12px}}
+@media(max-width:560px){.grid2,.grid3,.grid5{grid-template-columns:1fr}.logo{font-size:30px}}
+</style>
 </head>
-<body class="p-4 md:p-8">
-    
-    <!-- API Setting Button -->
-    <div class="absolute top-4 right-4 md:top-8 md:right-8 z-40">
-        <button onclick="document.getElementById('apiModal').classList.remove('hidden')" class="bg-white/5 hover:bg-white/10 text-white px-5 py-3 rounded-xl text-sm font-bold border border-white/10 transition-all flex items-center backdrop-blur-md shadow-xl">
-            <i class="fas fa-key mr-2 text-red-500"></i> API 설정
-        </button>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <div class="logo">플레이리스트 AI 스튜디오</div>
+      <div class="subtitle">제목 의미 기반 가사 · SUNO 스타일 · 썸네일 · 키워드 자동 생성</div>
+    </div>
+    <div id="modeStatus" class="status">오프라인 모드</div>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <div class="card-title">바이럴 플레이리스트 제작</div>
+      <div class="card-desc">곡 제목의 뜻을 분석해서 제목과 어울리는 3분 이상 다국어 가사를 생성합니다.</div>
+
+      <label class="label">곡 제목</label>
+      <input id="songTitle" class="input" placeholder="예시: Midnight Rain / Broken Heart / 고향역 / 첫사랑">
+
+      <label class="label">분위기 선택</label>
+      <div class="grid3" id="moodGroup">
+        <button class="btn active" data-value="심야 드라이브">심야 드라이브</button>
+        <button class="btn" data-value="감성 슬픔">감성 슬픔</button>
+        <button class="btn" data-value="로파이">로파이</button>
+        <button class="btn" data-value="감성 무드">감성 무드</button>
+        <button class="btn" data-value="K-POP">K-POP</button>
+        <button class="btn" data-value="트롯">트롯</button>
+      </div>
+
+      <label class="label">템포 선택</label>
+      <div class="grid5" id="tempoGroup">
+        <button class="btn" data-value="80 BPM">80 BPM</button>
+        <button class="btn active" data-value="90 BPM">90 BPM</button>
+        <button class="btn" data-value="120 BPM">120 BPM</button>
+        <button class="btn" data-value="130 BPM">130 BPM</button>
+        <button class="btn" data-value="158 BPM">158 BPM</button>
+      </div>
+
+      <label class="label">보컬 선택</label>
+      <div class="grid2" id="vocalGroup">
+        <button class="btn active" data-value="여성 보컬">여성 보컬</button>
+        <button class="btn" data-value="남성 보컬">남성 보컬</button>
+      </div>
+
+      <label class="label">플레이리스트 길이</label>
+      <select id="playlistLength" class="select">
+        <option>30분</option>
+        <option selected>1시간</option>
+        <option>2시간</option>
+        <option>3시간</option>
+      </select>
+
+      <label class="label">실행 모드</label>
+      <div class="grid2" id="modeGroup">
+        <button class="btn active" data-value="offline">오프라인 모드</button>
+        <button class="btn" data-value="online">온라인 AI 모드</button>
+      </div>
+
+      <button id="generateBtn" class="generate-btn">전체 플레이리스트 자동 생성</button>
+      <div class="small">온라인 AI 모드는 FastAPI 서버가 켜져 있어야 합니다. 주소: http://127.0.0.1:8000</div>
     </div>
 
-    <!-- API Modal -->
-    <div id="apiModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
-        <div class="glass-panel p-8 max-w-md w-full relative">
-            <button onclick="document.getElementById('apiModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-2xl font-black mb-2 text-white"><i class="fas fa-shield-alt text-red-500 mr-3"></i>API Key 설정</h3>
-            <p class="text-sm text-gray-400 mb-6 leading-relaxed">GitHub Pages 등 외부에서 실행하려면 새로운 Gemini API 키가 필요합니다. 입력하신 키는 소스코드에 공개되지 않고, 현재 사용 중인 브라우저에만 안전하게 저장됩니다.</p>
-            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-4 text-white mb-6 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all">
-            <button onclick="saveApiKey()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-red-900/30">기기에 안전하게 저장하기</button>
+    <div class="card">
+      <div class="card-title">AI 결과 미리보기</div>
+
+      <div class="copy-all-row">
+        <button class="copy-btn" data-copy="allText">전체 결과 복사</button>
+        <button class="copy-btn" data-copy="allLyricsText">전체 가사 복사</button>
+      </div>
+
+      <div class="preview-head"><span>제목 분석</span><button class="copy-btn" data-copy="titleAnalysis">분석 복사</button></div>
+      <div class="preview-box" id="titleAnalysis">생성 대기 중...</div>
+
+      <div class="preview-head"><span>플레이리스트 제목</span><button class="copy-btn" data-copy="playlistTitle">제목 복사</button></div>
+      <div class="preview-box" id="playlistTitle">생성 대기 중...</div>
+
+      <div class="preview-head">
+        <span>썸네일 사진</span>
+        <div>
+          <button class="copy-btn" id="copyThumbnailBtn">이미지 복사</button>
+          <button class="download-btn" id="downloadThumbnailBtn">PNG 다운로드</button>
         </div>
+      </div>
+      <div class="thumbnail-wrap"><canvas id="thumbnailCanvas" width="1280" height="720"></canvas></div>
+
+      <div class="preview-head"><span>썸네일 문구</span><button class="copy-btn" data-copy="thumbnailText">썸네일 문구 복사</button></div>
+      <div class="preview-box" id="thumbnailText">생성 대기 중...</div>
+
+      <div class="preview-head"><span>SUNO 스타일</span><button class="copy-btn" data-copy="sunoPrompt">SUNO 스타일 복사</button></div>
+      <div class="preview-box" id="sunoPrompt">생성 대기 중...</div>
+
+      <div class="preview-head"><span>키워드</span><button class="copy-btn" data-copy="keywordsText">키워드 복사</button></div>
+      <div class="tags" id="keywords"></div>
+      <div id="keywordsText" style="display:none"></div>
+
+      <div class="preview-head"><span>영어 가사</span><button class="copy-btn" data-copy="lyricsEn">영어 복사</button></div>
+      <div class="preview-box lyrics lang-block" id="lyricsEn">생성 대기 중...</div>
+
+      <div class="preview-head"><span>힌두어 가사</span><button class="copy-btn" data-copy="lyricsHi">힌두어 복사</button></div>
+      <div class="preview-box lyrics lang-block" id="lyricsHi">생성 대기 중...</div>
+
+      <div class="preview-head"><span>인도네시아어 가사</span><button class="copy-btn" data-copy="lyricsId">인도네시아어 복사</button></div>
+      <div class="preview-box lyrics lang-block" id="lyricsId">생성 대기 중...</div>
+
+      <div class="preview-head"><span>한국어 가사</span><button class="copy-btn" data-copy="lyricsKo">한국어 복사</button></div>
+      <div class="preview-box lyrics lang-block" id="lyricsKo">생성 대기 중...</div>
+
+      <div id="allLyricsText" style="display:none"></div>
+      <div id="allText" style="display:none"></div>
     </div>
+  </div>
+</div>
 
-    <div class="max-w-6xl mx-auto mt-16 md:mt-0">
-        <header class="mb-10 text-center">
-            <h1 class="text-6xl font-black mb-4 text-white tracking-tighter">
-                GLOBAL <span class="text-red-600">PLAYLIST</span> AI
-            </h1>
-            <p class="text-gray-400 text-lg font-light">초정밀 시장 분석 기반 유튜브 플레이리스트 자동 기획 시스템</p>
-        </header>
+<script>
+const API_URL = 'http://127.0.0.1:8000/api/generate';
 
-        <div class="glass-panel p-8 mb-12 shadow-2xl">
-            <div class="flex flex-col md:flex-row gap-4">
-                <input id="songTitle" type="text" placeholder="기획하고 싶은 무드나 제목을 입력하세요 (예: 비 오는 날 듣기 좋은 시티팝)" 
-                    class="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-5 focus:outline-none focus:ring-2 focus:ring-red-600/50 text-white text-xl transition-all">
-                <button id="generateBtn" onclick="generateSystem()" class="bg-red-600 hover:bg-red-700 text-white font-black py-5 px-12 rounded-2xl transition-all active:scale-95 shadow-xl shadow-red-900/40">
-                    엔진 가동
-                </button>
-            </div>
-        </div>
+const state = {
+  mood: '심야 드라이브',
+  tempo: '90 BPM',
+  vocal: '여성 보컬',
+  mode: 'offline',
+  last: {}
+};
 
-        <!-- Loading State -->
-        <div id="loading" class="hidden flex flex-col items-center py-32">
-            <div class="loading-spinner mb-8"></div>
-            <p id="loadingStatus" class="text-2xl text-white font-medium tracking-tight animate-pulse">글로벌 트렌드 데이터 수집 중...</p>
-        </div>
+function selectButton(groupId, key) {
+  document.getElementById(groupId).addEventListener('click', function(e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    [...this.querySelectorAll('button')].forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state[key] = btn.dataset.value;
+    if (key === 'mode') {
+      document.getElementById('modeStatus').innerText =
+        state.mode === 'online' ? '온라인 AI 모드' : '오프라인 모드';
+    }
+  });
+}
 
-        <div id="resultArea" class="hidden space-y-16">
-            <!-- 1. Thumbnail Preview -->
-            <section id="thumbnailSection">
-                <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                    <div>
-                        <h2 class="text-3xl font-bold flex items-center mb-2"><i class="fas fa-image mr-4 text-red-500"></i> AI 썸네일 마스터</h2>
-                        <p class="text-gray-500 text-sm">곡의 무드를 완벽하게 반영한 고급 썸네일 디자인</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
-                            <button onclick="switchThumbLang('en')" id="tbtn-en" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all active">EN</button>
-                            <button onclick="switchThumbLang('hi')" id="tbtn-hi" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all">HI</button>
-                            <button onclick="switchThumbLang('id')" id="tbtn-id" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all">ID</button>
-                            <button onclick="switchThumbLang('ko')" id="tbtn-ko" class="thumb-lang-btn px-4 py-2 text-xs font-black rounded-xl transition-all">KO</button>
-                        </div>
-                        <button onclick="downloadThumbnail()" class="bg-white text-black text-xs font-black py-3 px-6 rounded-xl flex items-center hover:bg-gray-200 transition-all">
-                            <i class="fas fa-save mr-2"></i> 이미지 저장
-                        </button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2">
-                        <div id="thumbnailContainer" class="thumbnail-preview">
-                            <div class="thumbnail-overlay">
-                                <p class="text-xs tracking-[0.4em] uppercase mb-4 opacity-80 font-bold text-red-500">Premium Curation</p>
-                                <h3 id="overlayText" class="thumbnail-text italic font-black text-white">Loading Title...</h3>
-                                <div class="mt-8 flex items-center gap-4">
-                                    <div class="w-12 h-[2px] bg-red-600"></div>
-                                    <span class="text-xs font-medium tracking-[0.2em] opacity-70">ESSENTIAL GLOBAL MIX</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass-panel p-8 flex flex-col justify-center space-y-6">
-                        <div class="flex items-center gap-3 text-red-500 font-bold text-lg">
-                            <i class="fas fa-lightbulb"></i>
-                            <h4>디자인 전략</h4>
-                        </div>
-                        <ul id="designStrategy" class="text-sm text-gray-400 space-y-4 leading-relaxed"></ul>
-                    </div>
-                </div>
-            </section>
+function cleanTitle(title) {
+  return (title || 'Midnight Rain').trim();
+}
 
-            <!-- 2. Analysis Content -->
-            <section>
-                <h2 class="text-3xl font-bold mb-8 flex items-center"><i class="fas fa-chart-line mr-4 text-emerald-500"></i> 글로벌 TOP 채널 분석</h2>
-                <div id="analysisContent" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-            </section>
+function includesAny(text, words) {
+  return words.some(w => text.includes(w));
+}
 
-            <!-- 3. Lyrics & Suno Style -->
-            <section>
-                <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                    <div>
-                        <h2 class="text-3xl font-bold flex items-center mb-2"><i class="fas fa-music mr-4 text-purple-500"></i> 다국어 가사 & 스타일</h2>
-                        <p class="text-gray-500 text-sm">Suno AI 제작을 위한 최적의 롱버전 가사 구성</p>
-                    </div>
-                    <button onclick="copyCurrentLyrics()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-black py-3 px-6 rounded-xl transition-all flex items-center shadow-lg">
-                        <i class="fas fa-copy mr-2"></i> 가사 복사
-                    </button>
-                </div>
-                <div class="glass-panel overflow-hidden">
-                    <div class="flex border-b border-white/10 bg-black/20 overflow-x-auto">
-                        <button id="btn-en" onclick="switchLang('en')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">ENGLISH</button>
-                        <button id="btn-hi" onclick="switchLang('hi')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">HINDI</button>
-                        <button id="btn-id" onclick="switchLang('id')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">INDONESIAN</button>
-                        <button id="btn-ko" onclick="switchLang('ko')" class="lang-btn px-10 py-5 text-sm font-black transition-all flex-shrink-0">KOREAN</button>
-                    </div>
-                    <div class="p-8">
-                        <div id="lyricsTitleArea" class="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
-                            <label class="text-[10px] text-purple-400 uppercase font-black block mb-2 tracking-widest">Song Concept</label>
-                            <h3 id="generatedSongTitle" class="text-2xl font-black text-white tracking-tight"></h3>
-                        </div>
-                        <div id="lyricsDisplay" class="h-[500px] overflow-y-auto whitespace-pre-line text-lg leading-relaxed text-gray-300 pr-4"></div>
-                    </div>
-                </div>
-                <div class="mt-6 p-8 bg-gradient-to-br from-purple-900/30 to-blue-900/20 border border-purple-500/20 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
-                    <div>
-                        <span class="text-purple-400 font-black text-xs uppercase tracking-[0.3em] block mb-2">SUNO AI PROMPT STYLE</span>
-                        <p id="sunoStyle" class="text-xl text-white font-bold tracking-tight"></p>
-                    </div>
-                    <button onclick="copyToClipboard('sunoStyle')" class="px-8 py-4 bg-purple-600/40 hover:bg-purple-600/60 rounded-2xl text-xs font-black transition">스타일 복사</button>
-                </div>
-            </section>
+function splitTitleWords(title) {
+  return cleanTitle(title)
+    .replace(/[^\w가-힣\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
 
-            <!-- 4. Video Details & Tags -->
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div class="space-y-8">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-3xl font-bold flex items-center"><i class="fas fa-file-alt mr-4 text-orange-500"></i> 영상 최적화 정보</h2>
-                        <button onclick="copyVideoInfo()" class="text-xs font-black bg-orange-600/20 hover:bg-orange-600/40 text-orange-400 px-4 py-2 rounded-xl border border-orange-600/20 transition-all">
-                            전체 복사
-                        </button>
-                    </div>
-                    <div id="videoInfoPanel" class="glass-panel p-10 space-y-8">
-                        <div>
-                            <label class="text-xs text-gray-500 uppercase font-black mb-3 block tracking-widest">Recommended Title</label>
-                            <div class="flex gap-4">
-                                <p id="videoTitle" class="text-2xl font-black text-white flex-1 leading-tight"></p>
-                                <button onclick="copyToClipboard('videoTitle')" class="text-gray-600 hover:text-white transition-colors"><i class="fas fa-copy text-xl"></i></button>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500 uppercase font-black mb-3 block tracking-widest">Description</label>
-                            <p id="videoDesc" class="text-sm text-gray-400 leading-relaxed"></p>
-                        </div>
-                        <div class="pt-8 border-t border-white/5">
-                            <label class="text-xs text-gray-500 uppercase font-black mb-4 block tracking-widest">Timeline</label>
-                            <div id="timeline" class="text-sm text-gray-500 font-mono space-y-2"></div>
-                        </div>
-                    </div>
-                </div>
+function analyzeTitle(title) {
+  const raw = cleanTitle(title);
+  const lower = raw.toLowerCase();
+  const words = splitTitleWords(raw);
 
-                <div class="space-y-8">
-                    <h2 class="text-3xl font-bold flex items-center"><i class="fas fa-hashtag mr-4 text-yellow-500"></i> 검색 엔진 최적화(SEO)</h2>
-                    <div class="glass-panel p-10 flex flex-col justify-between h-full">
-                        <div>
-                            <label class="text-xs text-gray-500 uppercase font-black mb-4 block tracking-widest">Metadata Tags</label>
-                            <div id="tags" class="flex flex-wrap gap-2 mb-10"></div>
-                            
-                            <div class="border-t border-white/10 pt-10">
-                                <h4 class="text-lg font-black text-white mb-2 tracking-tight">태그 활용 가이드</h4>
-                                <p class="text-xs text-gray-500 leading-relaxed">
-                                    상위 노출을 위해 가장 연관성이 높은 태그들이 생성되었습니다. 
-                                    유튜브 스튜디오의 '태그' 섹션에 그대로 붙여넣어 사용하세요. 
-                                    본문의 해시태그로 활용 시 검색 가시성이 극대화됩니다.
-                                </p>
-                            </div>
-                        </div>
+  let coreSymbol = raw;
+  let theme = `"${raw}"라는 제목 자체가 가진 감정`;
+  let conflict = '말하지 못한 마음과 다시 떠오르는 기억';
+  let resolution = '그 제목을 부르며 마음을 인정하고 앞으로 나아가는 것';
+  let place = '제목이 떠오르는 밤의 한 장면';
+  let object = '제목을 상징하는 작은 흔적';
+  let emotion = '깊은 그리움';
+  let image = '어두운 배경, 제목을 중심으로 번지는 감정';
 
-                        <button onclick="copyTags()" class="mt-12 w-full py-5 bg-white/5 hover:bg-white/10 rounded-2xl font-black text-sm transition-all border border-white/10 shadow-2xl">
-                            <i class="fas fa-copy mr-3"></i> 태그 전체 복사
-                        </button>
-                    </div>
-                </div>
-            </section>
+  if (includesAny(lower, ['rain', '비', '빗', '장마', 'storm', 'shower'])) {
+    coreSymbol = '비';
+    theme = `"${raw}"는 비가 내릴 때 다시 살아나는 그리움`;
+    conflict = '비가 올 때마다 잊은 줄 알았던 사람이 다시 떠오르는 마음';
+    resolution = '빗속에서 그 사람을 보내며 스스로를 위로하는 것';
+    place = '비 내리는 거리와 젖은 창문 앞';
+    object = '창문 위로 흐르는 빗방울';
+    emotion = '젖어드는 외로움';
+    image = '비, 젖은 도로, 창문, 네온 반사';
+  }
 
-            <!-- Final Export -->
-            <section class="text-center pt-20 pb-20">
-                <div class="inline-flex flex-col items-center gap-6">
-                    <p class="text-gray-600 text-sm italic font-medium">"기획된 리포트는 텍스트 파일로 안전하게 백업하세요"</p>
-                    <button onclick="downloadFullReport()" class="bg-white text-black font-black py-6 px-16 rounded-3xl transition-all flex items-center gap-4 hover:scale-105 shadow-2xl">
-                        <i class="fas fa-file-download text-2xl"></i> 기획 리포트 다운로드 (.txt)
-                    </button>
-                </div>
-            </section>
-        </div>
-    </div>
+  if (includesAny(lower, ['night', 'midnight', '새벽', '밤', '3am', 'moon', '달'])) {
+    coreSymbol = '밤';
+    theme = `"${raw}"는 모두가 잠든 시간에 혼자 남은 마음`;
+    conflict = '밤이 깊을수록 선명해지는 기억과 고독';
+    resolution = '어둠 속에서도 스스로의 진심을 받아들이는 것';
+    place = '새벽 도로와 조용한 방 안';
+    object = '달빛과 꺼지지 않는 작은 불빛';
+    emotion = '조용한 외로움';
+    image = '새벽, 달빛, 빈 도로, 푸른 그림자';
+  }
 
-    <script type="module">
-        // 시스템 내부에서는 환경 변수로 처리, 외부에서는 로컬스토리지에서 안전하게 불러옴
-        let apiKey = localStorage.getItem('gemini_api_key') || ""; 
+  if (includesAny(lower, ['love', 'heart', '사랑', '첫사랑', 'lover', 'romance'])) {
+    coreSymbol = '사랑';
+    theme = `"${raw}"는 아직 마음에 남은 사랑의 이름`;
+    conflict = '끝난 줄 알았지만 여전히 남아 있는 설렘과 미련';
+    resolution = '사랑했던 시간을 아름다운 기억으로 남기는 것';
+    place = '처음 마음이 시작된 거리';
+    object = '따뜻한 손끝과 오래된 약속';
+    emotion = '설렘과 애틋함';
+    image = '따뜻한 빛, 손, 봄바람, 웃음';
+  }
 
-        // API 키 저장 기능
-        window.saveApiKey = function() {
-            const key = document.getElementById('apiKeyInput').value.trim();
-            if (key) {
-                localStorage.setItem('gemini_api_key', key);
-                apiKey = key;
-                alert("✅ API 키가 로컬 브라우저에 안전하게 저장되었습니다!");
-            } else {
-                localStorage.removeItem('gemini_api_key');
-                apiKey = "";
-                alert("🗑️ API 키가 삭제되었습니다.");
-            }
-            document.getElementById('apiModal').classList.add('hidden');
-        };
+  if (includesAny(lower, ['broken', 'breakup', 'goodbye', '이별', '헤어', '그만', '끝', 'farewell'])) {
+    coreSymbol = '이별';
+    theme = `"${raw}"는 끝난 사랑 뒤에 남은 상처`;
+    conflict = '보내야 하지만 아직 마음이 붙잡고 있는 사람';
+    resolution = '마지막으로 이름을 부르고 놓아주는 것';
+    place = '마지막 인사를 나눈 거리';
+    object = '남겨진 편지와 식어버린 커피';
+    emotion = '아픈 체념';
+    image = '빈 의자, 편지, 흐린 하늘, 멀어진 뒷모습';
+  }
 
-        // 페이지 로드 시 저장된 키가 있으면 인풋 창에 세팅
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
-        });
+  if (includesAny(lower, ['dream', '꿈', 'star', '별', 'sky', '하늘', 'wish'])) {
+    coreSymbol = '꿈';
+    theme = `"${raw}"는 아직 포기하지 못한 꿈과 바람`;
+    conflict = '멀리 있어 닿지 않는 듯한 목표와 흔들리는 마음';
+    resolution = '다시 한 걸음 걸어가겠다는 다짐';
+    place = '별이 보이는 하늘 아래';
+    object = '작은 별빛과 접어둔 소원';
+    emotion = '희망과 갈망';
+    image = '별빛, 하늘, 먼 길, 빛나는 손';
+  }
 
-        window.generateSystem = async function() {
-            const titleInput = document.getElementById('songTitle').value;
-            if (!titleInput) return;
+  if (includesAny(lower, ['home', '고향', '엄마', '아버지', 'mother', 'father', 'family', '가족', '역'])) {
+    coreSymbol = '고향';
+    theme = `"${raw}"는 돌아가고 싶은 곳과 기다리는 마음`;
+    conflict = '멀리 떠나온 뒤에야 더 커지는 가족과 고향의 그리움';
+    resolution = '언젠가 다시 돌아가겠다는 약속';
+    place = '오래된 고향길과 역 앞';
+    object = '낡은 사진과 플랫폼의 불빛';
+    emotion = '따뜻한 그리움';
+    image = '고향역, 오래된 골목, 노을, 가족 사진';
+  }
 
-            const btn = document.getElementById('generateBtn');
-            const loading = document.getElementById('loading');
-            const resultArea = document.getElementById('resultArea');
-            const status = document.getElementById('loadingStatus');
+  if (includesAny(lower, ['road', 'drive', 'highway', '길', '도로', '여행', 'trip'])) {
+    coreSymbol = '길';
+    theme = `"${raw}"는 지나온 길과 앞으로 갈 길의 노래`;
+    conflict = '과거를 뒤에 두고도 계속 따라오는 기억';
+    resolution = '길 위에서 자신을 다시 찾는 것';
+    place = '끝없이 이어진 도로';
+    object = '흔들리는 백미러와 헤드라이트';
+    emotion = '자유와 쓸쓸함';
+    image = '고속도로, 자동차, 백미러, 지나가는 불빛';
+  }
 
-            btn.disabled = true;
-            loading.classList.remove('hidden');
-            resultArea.classList.add('hidden');
+  const titleLine = words.length > 1
+    ? `제목의 핵심 단어: ${words.join(', ')}`
+    : `제목의 핵심 단어: ${raw}`;
 
-            const systemPrompt = `당신은 전 세계 1억 구독자를 보유한 유튜브 플레이리스트 전략가입니다. 
-            사용자가 입력한 곡의 주제(무드, 장르 등)를 시각적, 청각적으로 완벽하게 분석하여 기획안을 도출하세요.
-            응답은 제공된 JSON 스키마를 엄격하게 준수해야 합니다.
-            - lyrics는 Intro, Verse, Pre-Chorus, Chorus를 포함한 최소 2분 이상의 롱버전으로 상세하게 작성하세요.
-            - image_prompt는 곡의 무드를 직관적으로 보여주는 매우 구체적인 씬(Scene) 묘사 영문 프롬프트여야 합니다. 반드시 '구체적인 장소, 시간대, 날씨, 핵심 피사체'를 명확히 포함하세요 (예: Raindrops on a cozy cafe window, a warm cup of coffee on a wooden table, blurry neon city lights at night). 추상적인 디자인 팁이 아닌 철저한 '상황 묘사'여야 합니다. 시작은 반드시 'Photorealistic high quality photography, shot on 35mm lens, DSLR'로 하고, 끝은 'cinematic lighting, empty space, absolutely no text, no watermark'로 작성하세요.`;
+  return { raw, words, coreSymbol, theme, conflict, resolution, place, object, emotion, image, titleLine };
+}
 
-            try {
-                status.innerText = "글로벌 플레이리스트 데이터 분석 중...";
-                
-                // Canvas 내부 환경과 외부 환경(개인 API 키)을 구분하여 사용 모델 동적 전환
-                const textModel = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
-                const textRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${textModel}:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `키워드: ${titleInput}` }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { 
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    analysis: { type: "ARRAY", items: { type: "OBJECT", properties: { channel: { type: "STRING" }, performance: { type: "STRING" }, strategy: { type: "STRING" } } } },
-                                    overlays: { type: "OBJECT", properties: { en: { type: "STRING" }, hi: { type: "STRING" }, id: { type: "STRING" }, ko: { type: "STRING" } } },
-                                    song_titles: { type: "OBJECT", properties: { en: { type: "STRING" }, hi: { type: "STRING" }, id: { type: "STRING" }, ko: { type: "STRING" } } },
-                                    lyrics: { type: "OBJECT", properties: { en: { type: "STRING" }, hi: { type: "STRING" }, id: { type: "STRING" }, ko: { type: "STRING" } } },
-                                    suno: { type: "OBJECT", properties: { style: { type: "STRING" }, tags: { type: "STRING" } } },
-                                    video: { type: "OBJECT", properties: { title: { type: "STRING" }, desc: { type: "STRING" }, timeline: { type: "ARRAY", items: { type: "STRING" } } }, required: ["title", "desc", "timeline"] },
-                                    keywords: { type: "ARRAY", items: { type: "STRING" } },
-                                    image_prompt: { type: "STRING" },
-                                    design_tips: { type: "ARRAY", items: { type: "STRING" } }
-                                },
-                                required: ["analysis", "overlays", "song_titles", "lyrics", "suno", "video", "keywords", "image_prompt", "design_tips"]
-                            },
-                            maxOutputTokens: 8192
-                        }
-                    })
-                });
+function makeKeywords(title, mood, tempo, vocal, analysis) {
+  const base = splitTitleWords(title).map(w => w.toLowerCase());
+  return [
+    ...base.slice(0, 4),
+    analysis.coreSymbol,
+    analysis.emotion,
+    mood,
+    tempo,
+    vocal,
+    'playlist',
+    'suno',
+    'title based lyrics',
+    'youtube seo'
+  ];
+}
 
-                if (!textRes.ok) {
-                    if (textRes.status === 400 || textRes.status === 403) {
-                        throw new Error(`우측 상단의 'API 설정' 버튼을 눌러 새롭게 발급받은 Gemini API 키를 입력해 주세요.`);
-                    }
-                    const errText = await textRes.text();
-                    let errMsg = "알 수 없는 API 오류";
-                    try {
-                        const errObj = JSON.parse(errText);
-                        errMsg = errObj.error.message;
-                    } catch(e) {}
-                    throw new Error(`API 연결 실패 (${textRes.status}): ${errMsg}`);
-                }
-                
-                const textData = await textRes.json();
-                let result;
-                try {
-                    const rawText = textData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                    const cleanedText = rawText.replace(/```json|```/g, '').trim();
-                    result = JSON.parse(cleanedText);
-                } catch (parseError) {
-                    console.error("JSON 파싱 에러. 원본 텍스트:", textData);
-                    throw new Error('데이터 처리 중 오류가 발생했습니다. 다시 버튼을 눌러주세요.');
-                }
+function getMoodLine(mood) {
+  if (mood === 'K-POP') return 'K-POP arrangement, bright hook, modern synth, polished dance-pop energy';
+  if (mood === '트롯') return 'Korean trot arrangement, emotional vibrato, warm brass, nostalgic rhythm';
+  if (mood === '로파이') return 'lofi beat, warm vinyl texture, mellow drums, soft night ambience';
+  if (mood === '감성 슬픔') return 'sad piano, emotional strings, rainy atmosphere, deep vocal line';
+  if (mood === '감성 무드') return 'dreamy pads, cinematic reverb, nostalgic melody, emotional atmosphere';
+  return 'night drive atmosphere, city lights, lonely road, emotional pop';
+}
 
-                status.innerText = "곡 테마에 완벽히 몰입된 실사 씬(Scene) 렌더링 중...";
-                
-                // AI가 기획한 구체적인 씬(Scene) 묘사에 최고 품질 옵션을 추가
-                const baseImagePrompt = result.image_prompt || titleInput;
-                const enhancedPrompt = `${baseImagePrompt}, masterpiece, 8k resolution, highly detailed, perfect composition, aesthetic wallpaper, absolutely no text, no words, no letters, no watermark`;
+function makeEnglishLyrics(t, a) {
+return `[Intro]
+${t}, I say your name and the story begins
+Not as a random word, but the place my heart has been
+I see ${a.object}, I feel ${a.emotion}
+And every sound returns to ${t}
 
-                let imageUrl = "";
-                
-                // 1차 시도: 구글 메인 이미지 AI 엔진 (Imagen) - 외부 사용 시 권한 문제 회피를 위해 옵셔널 처리
-                try {
-                    if(apiKey) {
-                        const imageRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                instances: { prompt: enhancedPrompt },
-                                parameters: { sampleCount: 1 }
-                            })
-                        });
+[Verse 1]
+${t} is the reason this song starts tonight
+It is written in ${a.place}, under a fading light
+It carries ${a.theme}
+It holds the truth I could not explain
+When I whisper ${t}, I remember why it hurts
+Why the silence comes first, why the memory still works
+This is not another nameless melody
+It is the title of what still lives in me
 
-                        if (imageRes.ok) {
-                            const imageData = await imageRes.json();
-                            if (imageData.predictions?.[0]?.bytesBase64Encoded) {
-                                imageUrl = `data:image/png;base64,${imageData.predictions[0].bytesBase64Encoded}`;
-                            }
-                        }
-                    }
-                } catch(imgErr) {
-                    console.error("Image API request failed", imgErr);
-                }
+[Pre-Chorus]
+The meaning of ${t} keeps pulling me through
+It speaks of ${a.conflict}
+At ${state.tempo}, my heart begins to move
+Turning the title into something true
 
-                // 2차 시도 (Bulletproof Fallback): API 키가 없거나 외부 실행 시 무료 무제한 서브엔진 활용
-                if (!imageUrl) {
-                    console.log("서브 AI 이미지 엔진을 가동합니다.");
-                    const fallbackPrompt = encodeURIComponent(`${baseImagePrompt}, photorealistic, aesthetic, cinematic, no text, masterpiece`);
-                    imageUrl = `https://image.pollinations.ai/prompt/${fallbackPrompt}?width=1600&height=900&nologo=true`;
-                }
+[Chorus]
+${t}, you are the center of the song
+The reason every line belongs
+In this ${state.mood} melody
+Your meaning keeps surrounding me
+${t}, I sing you again
+Through the hope, through the pain
+With this ${state.vocal} in the air
+Your story is everywhere
 
-                renderResult(result, imageUrl);
-            } catch (error) {
-                console.error('Error Details:', error);
-                const errorMsg = document.createElement('div');
-                errorMsg.className = "fixed top-5 right-5 bg-red-600 text-white p-5 rounded-xl shadow-2xl z-[100] font-bold";
-                errorMsg.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${error.message}`;
-                document.body.appendChild(errorMsg);
-                setTimeout(() => errorMsg.remove(), 6000);
-            } finally {
-                loading.classList.add('hidden');
-                btn.disabled = false;
-            }
-        }
+[Verse 2]
+If ${t} means ${a.coreSymbol}, then I follow that sign
+Through every broken road and every hidden line
+I see ${a.image}
+And I know this feeling has a name
+It is not just love, not just goodbye
+It is the shape of a heart learning how to try
+Every verse must return to you
+Because ${t} is the only truth
 
-        let currentLyrics = {};
-        let currentSongTitles = {};
-        let currentOverlays = {};
-        let fullData = {};
+[Pre-Chorus 2]
+I do not run away from what it means
+I hold the title inside my dreams
+The story says: ${a.resolution}
+And now the chorus rises with emotion
 
-        function renderResult(data, imageUrl) {
-            fullData = data;
-            const resultArea = document.getElementById('resultArea');
-            resultArea.classList.remove('hidden');
-            
-            currentOverlays = data.overlays || {};
-            const thumbContainer = document.getElementById('thumbnailContainer');
-            thumbContainer.style.backgroundImage = `url('${imageUrl}')`;
-            switchThumbLang('en'); 
+[Chorus 2]
+${t}, you are the center of the song
+The reason every line belongs
+In this ${state.mood} melody
+Your meaning keeps surrounding me
+${t}, I sing you again
+Through the hope, through the pain
+With this ${state.vocal} in the air
+Your story is everywhere
 
-            document.getElementById('designStrategy').innerHTML = (data.design_tips || []).map(tip => `<li>• ${tip}</li>`).join('');
-            
-            const analysisContent = document.getElementById('analysisContent');
-            analysisContent.innerHTML = (data.analysis || []).map(a => `
-                <div class="glass-panel p-6 border-l-4 border-emerald-500 shadow-xl transition-transform hover:-translate-y-1">
-                    <p class="text-xs text-emerald-500 font-black mb-1">${a.channel}</p>
-                    <h5 class="font-bold text-white mb-3">${a.performance}</h5>
-                    <p class="text-xs text-gray-400 leading-relaxed">${a.strategy}</p>
-                </div>
-            `).join('');
+[Bridge]
+Now I understand the title clearly
+It was never far, it was always near me
+It was ${a.theme}
+It was ${a.emotion} becoming a flame
+I will not let the words drift away
+I will sing them until they find their place
+${t}, this is your final light
+A name that turns the dark to life
 
-            currentLyrics = data.lyrics || {};
-            currentSongTitles = data.song_titles || {};
-            switchLang('en');
+[Final Chorus]
+${t}, stay alive tonight
+In every shadow, every light
+In this ${state.mood} melody
+You are more than memory
+${t}, I know what you mean
+You are the heart inside the scene
+With this ${state.vocal} rising high
+Your meaning reaches the sky
 
-            const sunoStyle = document.getElementById('sunoStyle');
-            sunoStyle.innerText = `${data.suno?.style || ''} | ${data.suno?.tags || ''}`;
-            
-            document.getElementById('videoTitle').innerText = data.video?.title || '';
-            document.getElementById('videoDesc').innerText = data.video?.desc || '';
-            
-            const timeline = document.getElementById('timeline');
-            timeline.innerHTML = (data.video?.timeline || []).map(t => `<p>${t}</p>`).join('');
-            
-            const tags = document.getElementById('tags');
-            tags.innerHTML = (data.keywords || []).map(k => `<span class="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium">#${k}</span>`).join('');
-            
-            setTimeout(() => {
-                window.scrollTo({ top: resultArea.offsetTop - 40, behavior: 'smooth' });
-            }, 300);
-        }
+[Outro]
+When the last note fades from me
+Only ${t} remains clearly
+Not just a title, not just a line
+But the song that finally became mine`;
+}
 
-        window.switchThumbLang = (lang) => {
-            document.querySelectorAll('.thumb-lang-btn').forEach(b => b.classList.toggle('active', b.id === `tbtn-${lang}`));
-            const overlayText = document.getElementById('overlayText');
-            overlayText.innerText = currentOverlays[lang] || '';
-        };
+function makeKoreanLyrics(t, a) {
+return `[Intro]
+${t}, 그 이름을 부르면 이야기가 시작돼
+그냥 붙인 제목이 아니라 내 마음이 머문 자리야
+나는 ${a.object}을 보고, ${a.emotion}을 느껴
+모든 소리는 다시 ${t}로 돌아와
 
-        window.switchLang = (lang) => {
-            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${lang}`));
-            document.getElementById('generatedSongTitle').innerText = currentSongTitles[lang] || '';
-            document.getElementById('lyricsDisplay').innerText = currentLyrics[lang] || '';
-        };
+[Verse 1]
+${t} 때문에 이 노래가 오늘 밤 시작돼
+${a.place} 위에 조용히 적힌 마음 같아
+그 안에는 ${a.theme}이 있고
+설명하지 못했던 진심이 남아 있어
+내가 ${t}를 속삭이면 왜 아픈지 알 것 같아
+왜 침묵이 먼저 오고, 왜 기억이 아직 남는지
+이건 아무 제목의 노래가 아니야
+아직 내 안에 살아 있는 이름이야
 
-        window.downloadThumbnail = () => {
-            const container = document.getElementById('thumbnailContainer');
-            html2canvas(container, { useCORS: true, scale: 3 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Playlist_Thumb_${new Date().getTime()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
-        };
+[Pre-Chorus]
+${t}의 의미가 나를 계속 끌고 가
+그 안에는 ${a.conflict}이 있어
+${state.tempo} 리듬에 심장이 움직이고
+제목은 진짜 감정이 돼
 
-        window.downloadFullReport = () => {
-            if (!fullData || !fullData.video) return;
-            let r = `[GLOBAL PLAYLIST AI REPORT]\n\nGENERATE DATE: ${new Date().toLocaleString()}\n`;
-            r += `RECOMMENDED TITLE: ${fullData.video.title}\n`;
-            r += `DESCRIPTION: ${fullData.video.desc}\n\n`;
-            r += `--- LYRICS SELECTION ---\n`;
-            ['en', 'hi', 'id', 'ko'].forEach(l => {
-                r += `[${l.toUpperCase()}]\nTITLE: ${fullData.song_titles?.[l] || 'N/A'}\n${fullData.lyrics?.[l] || 'N/A'}\n\n`;
-            });
-            r += `--- SUNO AI STYLE ---\n${fullData.suno?.style || 'N/A'}\nTAGS: ${fullData.suno?.tags || 'N/A'}\n`;
-            
-            const blob = new Blob([r], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `AI_Playlist_Report.txt`;
-            link.click();
-        };
+[Chorus]
+${t}, 너는 이 노래의 중심이야
+모든 가사가 너에게로 돌아가
+이 ${state.mood} 멜로디 안에서
+너의 의미가 나를 감싸
+${t}, 다시 너를 불러
+희망과 아픔을 지나서
+이 ${state.vocal}이 울리는 동안
+너의 이야기는 계속 살아
 
-        window.copyTextToClipboard = (text) => {
-            const el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            
-            const toast = document.createElement('div');
-            toast.innerText = "복사되었습니다";
-            toast.className = "fixed bottom-12 right-12 bg-red-600 text-white px-8 py-4 rounded-2xl shadow-2xl z-50 font-black animate-bounce";
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
-        };
+[Verse 2]
+${t}가 ${a.coreSymbol}을 뜻한다면 나는 그 길을 따라갈게
+무너진 길과 숨겨진 마음을 지나갈게
+나는 ${a.image}을 떠올리고
+이 감정에도 이름이 있다는 걸 알아
+그건 단순한 사랑도, 단순한 이별도 아니야
+다시 살아보려는 마음의 모양이야
+모든 절은 다시 너에게 돌아와야 해
+왜냐하면 ${t}가 이 노래의 진실이니까
 
-        window.copyCurrentLyrics = () => {
-            const lyrics = document.getElementById('lyricsDisplay').innerText;
-            if (lyrics) window.copyTextToClipboard(lyrics);
-        };
-        
-        window.copyVideoInfo = () => {
-            const title = document.getElementById('videoTitle').innerText;
-            const desc = document.getElementById('videoDesc').innerText;
-            if (title || desc) window.copyTextToClipboard(`${title}\n\n${desc}`);
-        };
-        
-        window.copyTags = () => {
-            const tags = Array.from(document.querySelectorAll('#tags span')).map(s => s.innerText).join(' ');
-            if (tags) window.copyTextToClipboard(tags);
-        };
-        
-        window.copyToClipboard = (id) => {
-            const el = document.getElementById(id);
-            if (el) window.copyTextToClipboard(el.innerText);
-        };
-    </script>
+[Pre-Chorus 2]
+나는 그 의미에서 도망치지 않아
+제목을 꿈속에 꼭 안고 있어
+이 이야기는 말해: ${a.resolution}
+그리고 후렴은 더 크게 올라가
+
+[Chorus 2]
+${t}, 너는 이 노래의 중심이야
+모든 가사가 너에게로 돌아가
+이 ${state.mood} 멜로디 안에서
+너의 의미가 나를 감싸
+${t}, 다시 너를 불러
+희망과 아픔을 지나서
+이 ${state.vocal}이 울리는 동안
+너의 이야기는 계속 살아
+
+[Bridge]
+이제야 제목을 분명히 이해해
+멀리 있던 게 아니라 늘 내 곁에 있었어
+그건 ${a.theme}이었고
+${a.emotion}이 불빛처럼 타오른 거야
+나는 이 말을 흩어지게 두지 않을게
+제자리를 찾을 때까지 노래할게
+${t}, 이건 너의 마지막 빛
+어둠을 살아나게 하는 이름
+
+[Final Chorus]
+${t}, 오늘 밤에도 살아 있어
+모든 그림자와 빛 사이에서
+이 ${state.mood} 멜로디 안에
+넌 기억보다 더 깊어
+${t}, 이제 네 뜻을 알아
+넌 장면 속의 심장이야
+이 ${state.vocal}이 높이 울릴 때
+너의 의미는 하늘에 닿아
+
+[Outro]
+마지막 음이 사라진 뒤에도
+${t}만은 선명하게 남아
+그냥 제목도, 그냥 문장도 아닌
+마침내 내 노래가 된 이름`;
+}
+
+function makeHindiLyrics(t, a) {
+return `[Intro]
+${t}, जब मैं यह नाम लेता हूं कहानी शुरू होती है
+यह कोई साधारण शब्द नहीं, यह मेरे दिल की जगह है
+मैं ${a.object} देखता हूं, ${a.emotion} महसूस करता हूं
+हर आवाज़ फिर ${t} की ओर लौटती है
+
+[Verse 1]
+${t} ही वजह है कि यह गीत आज रात शुरू हुआ
+${a.place} में जैसे दिल का सच लिखा हुआ
+इसमें ${a.theme} छिपी है
+वह बात जो मैं कभी समझा न सका
+जब मैं ${t} कहता हूं, दर्द का कारण समझ आता है
+क्यों खामोशी पहले आती है, क्यों याद अब भी रह जाती है
+यह कोई बेनाम धुन नहीं है
+यह वह नाम है जो मेरे अंदर अभी भी जिंदा है
+
+[Pre-Chorus]
+${t} का अर्थ मुझे आगे खींचता है
+इसमें ${a.conflict} बसी है
+${state.tempo} की धड़कन में दिल चल पड़ता है
+और शीर्षक सच्चा एहसास बन जाता है
+
+[Chorus]
+${t}, तू ही इस गीत का केंद्र है
+हर पंक्ति फिर तेरे पास लौटती है
+इस ${state.mood} धुन में
+तेरा अर्थ मुझे घेर लेता है
+${t}, मैं तुझे फिर गाता हूं
+उम्मीद और दर्द से गुजरता हूं
+इस ${state.vocal} की आवाज़ में
+तेरी कहानी हर जगह रहती है
+
+[Verse 2]
+अगर ${t} ${a.coreSymbol} का संकेत है, मैं उसी राह चलूंगा
+टूटे रास्तों और छिपे दिलों से गुजरूंगा
+मैं ${a.image} को देखता हूं
+और जानता हूं कि इस भावना का भी एक नाम है
+यह सिर्फ प्यार नहीं, सिर्फ बिछड़ना नहीं
+यह फिर जीना सीखते दिल की शक्ल है
+हर अंतरा फिर तुझ तक लौटना चाहिए
+क्योंकि ${t} ही इस गीत की सच्चाई है
+
+[Pre-Chorus 2]
+मैं इसके अर्थ से भागूंगा नहीं
+मैं शीर्षक को सपनों में संभालूंगा
+कहानी कहती है: ${a.resolution}
+और कोरस फिर ऊंचा उठता है
+
+[Chorus 2]
+${t}, तू ही इस गीत का केंद्र है
+हर पंक्ति फिर तेरे पास लौटती है
+इस ${state.mood} धुन में
+तेरा अर्थ मुझे घेर लेता है
+${t}, मैं तुझे फिर गाता हूं
+उम्मीद और दर्द से गुजरता हूं
+इस ${state.vocal} की आवाज़ में
+तेरी कहानी हर जगह रहती है
+
+[Bridge]
+अब मैं शीर्षक को साफ समझता हूं
+यह दूर नहीं था, हमेशा मेरे पास था
+यह ${a.theme} था
+यह ${a.emotion} की जलती हुई लौ थी
+मैं इन शब्दों को खोने नहीं दूंगा
+इनको सही जगह मिलने तक गाऊंगा
+${t}, यह तेरी अंतिम रोशनी है
+एक नाम जो अंधेरे को जीवन दे
+
+[Final Chorus]
+${t}, आज रात जिंदा रह
+हर छाया और हर रोशनी में
+इस ${state.mood} धुन के भीतर
+तू याद से भी गहरा है
+${t}, अब मैं तेरा मतलब जानता हूं
+तू इस दृश्य का धड़कता दिल है
+जब यह ${state.vocal} ऊंचा उठता है
+तेरा अर्थ आसमान छूता है
+
+[Outro]
+जब आखिरी सुर भी मिट जाएगा
+सिर्फ ${t} साफ रह जाएगा
+सिर्फ शीर्षक नहीं, सिर्फ पंक्ति नहीं
+बल्कि वह गीत जो आखिर मेरा बन गया`;
+}
+
+function makeIndonesianLyrics(t, a) {
+return `[Intro]
+${t}, saat kusebut namamu cerita dimulai
+Bukan kata biasa, tapi tempat hatiku singgah
+Aku melihat ${a.object}, merasakan ${a.emotion}
+Dan semua suara kembali menuju ${t}
+
+[Verse 1]
+${t} adalah alasan lagu ini lahir malam ini
+Tertulis di ${a.place}, seperti rahasia hati
+Di dalamnya ada ${a.theme}
+Kebenaran yang tak sempat kujelaskan
+Saat kubisikkan ${t}, aku tahu mengapa sakit
+Mengapa sunyi datang dulu, mengapa kenangan tetap bangkit
+Ini bukan melodi tanpa nama
+Ini judul dari rasa yang masih tinggal lama
+
+[Pre-Chorus]
+Makna ${t} terus menarikku
+Di dalamnya ada ${a.conflict}
+Dalam irama ${state.tempo}, hatiku bergerak
+Mengubah judul menjadi rasa yang nyata
+
+[Chorus]
+${t}, kaulah pusat lagu ini
+Alasan setiap baris kembali
+Dalam melodi ${state.mood} ini
+Maknamu mengelilingi hati
+${t}, kunyanyikan lagi
+Lewat harapan dan luka ini
+Dengan ${state.vocal} yang terdengar
+Ceritamu tetap berpijar
+
+[Verse 2]
+Jika ${t} berarti ${a.coreSymbol}, aku mengikuti tandanya
+Melewati jalan retak dan hati yang menyimpannya
+Aku melihat ${a.image}
+Dan tahu rasa ini punya nama
+Bukan sekadar cinta, bukan sekadar perpisahan
+Ini bentuk hati yang belajar bertahan
+Setiap bait harus kembali padamu
+Karena ${t} adalah kebenaran laguku
+
+[Pre-Chorus 2]
+Aku tak akan lari dari artinya
+Kusimpan judul ini dalam mimpi
+Kisah ini berkata: ${a.resolution}
+Dan chorus naik dengan emosi
+
+[Chorus 2]
+${t}, kaulah pusat lagu ini
+Alasan setiap baris kembali
+Dalam melodi ${state.mood} ini
+Maknamu mengelilingi hati
+${t}, kunyanyikan lagi
+Lewat harapan dan luka ini
+Dengan ${state.vocal} yang terdengar
+Ceritamu tetap berpijar
+
+[Bridge]
+Kini kupahami judul ini dengan jelas
+Ia tak jauh, ia selalu dekat
+Ia adalah ${a.theme}
+Ia adalah ${a.emotion} yang menjadi nyala
+Aku takkan membiarkan kata ini hilang
+Kunyanyikan sampai menemukan pulang
+${t}, inilah cahaya terakhirmu
+Nama yang membuat gelap jadi hidup
+
+[Final Chorus]
+${t}, hiduplah malam ini
+Di setiap bayang dan cahaya ini
+Dalam melodi ${state.mood} ini
+Kau lebih dalam dari memori
+${t}, kini kutahu maknamu
+Kau jantung dari seluruh adegan itu
+Saat ${state.vocal} meninggi
+Maknamu menyentuh langit tinggi
+
+[Outro]
+Saat nada terakhir menghilang
+Hanya ${t} yang tetap terang
+Bukan sekadar judul, bukan sekadar baris
+Tapi lagu yang akhirnya menjadi milikku`;
+}
+
+function offlineGenerate(title, mood, tempo, vocal, length) {
+  const a = analyzeTitle(title);
+  const safeTitle = a.raw;
+  const moodLine = getMoodLine(mood);
+
+  const playlistTitle = `${safeTitle} | 제목 맞춤 ${a.coreSymbol} ${mood} ${tempo} ${vocal}`;
+  const thumbnailText = `${safeTitle}\n${a.emotion}`;
+  const titleAnalysis = `제목: ${safeTitle}
+${a.titleLine}
+핵심 상징: ${a.coreSymbol}
+핵심 주제: ${a.theme}
+갈등: ${a.conflict}
+해결 방향: ${a.resolution}
+장면: ${a.place}
+상징 오브젝트: ${a.object}
+감정: ${a.emotion}
+썸네일 이미지 방향: ${a.image}`;
+
+  const sunoPrompt =
+`Title: ${safeTitle}
+Title Meaning: ${a.theme}
+Core Symbol: ${a.coreSymbol}
+Conflict: ${a.conflict}
+Resolution: ${a.resolution}
+Visual Mood: ${a.image}
+Style: ${mood}, ${tempo}, ${vocal}
+Length Target: 3 minutes 20 seconds to 3 minutes 50 seconds
+Structure: Intro 8 bars, Verse 1, Pre-Chorus, Chorus, Verse 2, Pre-Chorus 2, Chorus 2, Bridge, Final Chorus, Outro
+Mood Detail: ${moodLine}
+Arrangement: emotional melody, memorable hook, polished arrangement, clear vocal, cinematic reverb, radio-ready mix
+Important Lyric Rule: The lyric must never leave the title "${safeTitle}". Every section must return to the title, its core symbol "${a.coreSymbol}", and its story meaning.
+Use Case: SUNO music generation, YouTube playlist, viral emotional music, strong chorus, repeatable hook`;
+
+  const keywords = makeKeywords(safeTitle, mood, tempo, vocal, a);
+
+  return {
+    playlistTitle,
+    thumbnailText,
+    titleAnalysis,
+    sunoPrompt,
+    keywords,
+    lyrics: {
+      en: makeEnglishLyrics(safeTitle, a),
+      hi: makeHindiLyrics(safeTitle, a),
+      id: makeIndonesianLyrics(safeTitle, a),
+      ko: makeKoreanLyrics(safeTitle, a)
+    }
+  };
+}
+
+function render(data) {
+  state.last = data;
+
+  if (document.getElementById('titleAnalysis')) document.getElementById('titleAnalysis').innerText = data.titleAnalysis;
+  document.getElementById('playlistTitle').innerText = data.playlistTitle;
+  document.getElementById('thumbnailText').innerText = data.thumbnailText;
+  document.getElementById('sunoPrompt').innerText = data.sunoPrompt;
+  document.getElementById('lyricsEn').innerText = data.lyrics.en;
+  document.getElementById('lyricsHi').innerText = data.lyrics.hi;
+  document.getElementById('lyricsId').innerText = data.lyrics.id;
+  document.getElementById('lyricsKo').innerText = data.lyrics.ko;
+
+  document.getElementById('keywords').innerHTML = data.keywords.map(k => `<span class="tag">#${escapeHtml(k)}</span>`).join('');
+  document.getElementById('keywordsText').innerText = data.keywords.map(k => `#${k}`).join(' ');
+
+  const allLyrics =
+`[ENGLISH]
+${data.lyrics.en}
+
+[HINDI]
+${data.lyrics.hi}
+
+[INDONESIAN]
+${data.lyrics.id}
+
+[KOREAN]
+${data.lyrics.ko}`;
+
+  const allText =
+`[TITLE ANALYSIS]
+${data.titleAnalysis}
+
+[TITLE]
+${data.playlistTitle}
+
+[THUMBNAIL TEXT]
+${data.thumbnailText}
+
+[SUNO STYLE]
+${data.sunoPrompt}
+
+[KEYWORDS]
+${data.keywords.map(k => '#' + k).join(' ')}
+
+[LYRICS]
+${allLyrics}`;
+
+  document.getElementById('allLyricsText').innerText = allLyrics;
+  document.getElementById('allText').innerText = allText;
+
+  drawThumbnail(data);
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, s => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[s]));
+}
+
+function drawThumbnail(data) {
+  const canvas = document.getElementById('thumbnailCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+
+  const mood = state.mood;
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+
+  if (mood === 'K-POP') {
+    grad.addColorStop(0, '#ff2bd6');
+    grad.addColorStop(.45, '#1717ff');
+    grad.addColorStop(1, '#00e5ff');
+  } else if (mood === '트롯') {
+    grad.addColorStop(0, '#3b0a0a');
+    grad.addColorStop(.5, '#b45309');
+    grad.addColorStop(1, '#facc15');
+  } else if (mood === '로파이') {
+    grad.addColorStop(0, '#111827');
+    grad.addColorStop(.5, '#4c1d95');
+    grad.addColorStop(1, '#0f766e');
+  } else {
+    grad.addColorStop(0, '#020617');
+    grad.addColorStop(.5, '#312e81');
+    grad.addColorStop(1, '#083344');
+  }
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  for (let i = 0; i < 90; i++) {
+    const x = (i * 137) % w;
+    const y = (i * 71) % h;
+    const r = (i % 4) + 1;
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.035 + (i % 7) * 0.012) + ')';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.48)';
+  ctx.fillRect(0, h * 0.50, w, h * 0.50);
+
+  const lines = data.thumbnailText.split('\n');
+  ctx.fillStyle = '#ffffff';
+  ctx.textBaseline = 'top';
+  ctx.font = '900 76px Arial';
+  ctx.fillText(lines[0] || '', 70, 440);
+
+  ctx.font = '800 54px Arial';
+  ctx.fillStyle = '#e5e7eb';
+  ctx.fillText(lines[1] || '', 72, 535);
+
+  ctx.font = '700 30px Arial';
+  ctx.fillStyle = '#a7f3d0';
+  ctx.fillText(`${state.mood} · ${state.tempo} · ${state.vocal}`, 72, 635);
+}
+
+async function generatePlaylist() {
+  const btn = document.getElementById('generateBtn');
+  const title = cleanTitle(document.getElementById('songTitle').value);
+  const length = document.getElementById('playlistLength').value;
+
+  btn.disabled = true;
+  btn.innerText = '생성 중...';
+
+  try {
+    if (state.mode === 'online') {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          mood: state.mood,
+          tempo: state.tempo,
+          vocal: state.vocal,
+          length,
+          instruction: `Create lyrics strictly based on the title meaning. The title is "${title}". Do not write unrelated generic lyrics.`
+        })
+      });
+
+      if (!response.ok) throw new Error('온라인 서버 응답 실패');
+
+      const data = await response.json();
+      const raw = data.result || '';
+
+      const fallback = offlineGenerate(title, state.mood, state.tempo, state.vocal, length);
+      fallback.sunoPrompt = raw || fallback.sunoPrompt;
+      fallback.lyrics.ko = raw || fallback.lyrics.ko;
+      render(fallback);
+    } else {
+      render(offlineGenerate(title, state.mood, state.tempo, state.vocal, length));
+    }
+  } catch (e) {
+    alert('온라인 생성에 실패했습니다. 오프라인 생성으로 전환합니다.');
+    state.mode = 'offline';
+    document.getElementById('modeStatus').innerText = '오프라인 모드';
+    document.querySelectorAll('#modeGroup button').forEach(b => b.classList.remove('active'));
+    document.querySelector('#modeGroup button[data-value="offline"]').classList.add('active');
+    render(offlineGenerate(title, state.mood, state.tempo, state.vocal, length));
+  }
+
+  btn.disabled = false;
+  btn.innerText = '전체 플레이리스트 자동 생성';
+}
+
+async function copyToClipboard(text, button) {
+  const value = String(text || '').trim();
+  if (!value) {
+    alert('복사할 내용이 없습니다.');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      fallbackCopyText(value);
+    }
+    showCopied(button);
+  } catch (e) {
+    fallbackCopyText(value);
+    showCopied(button);
+  }
+}
+
+function fallbackCopyText(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '-9999px';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  const ok = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  if (!ok) throw new Error('copy failed');
+}
+
+function showCopied(button) {
+  if (!button) {
+    alert('복사되었습니다.');
+    return;
+  }
+  const old = button.innerText;
+  button.innerText = '복사 완료';
+  button.classList.add('ok');
+  setTimeout(() => {
+    button.innerText = old;
+    button.classList.remove('ok');
+  }, 1200);
+}
+
+async function copyThumbnailImage(button) {
+  const canvas = document.getElementById('thumbnailCanvas');
+  if (!navigator.clipboard || !window.ClipboardItem) {
+    downloadThumbnail();
+    alert('브라우저가 이미지 복사를 지원하지 않아 PNG로 다운로드합니다.');
+    return;
+  }
+  canvas.toBlob(async function(blob) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      showCopied(button);
+    } catch (e) {
+      downloadThumbnail();
+      alert('이미지 복사가 제한되어 PNG로 다운로드합니다.');
+    }
+  }, 'image/png');
+}
+
+function downloadThumbnail() {
+  const canvas = document.getElementById('thumbnailCanvas');
+  const link = document.createElement('a');
+  const title = cleanTitle(document.getElementById('songTitle').value).replace(/[\\/:*?"<>|]/g, '_');
+  link.download = title + '_thumbnail.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function init() {
+  selectButton('moodGroup', 'mood');
+  selectButton('tempoGroup', 'tempo');
+  selectButton('vocalGroup', 'vocal');
+  selectButton('modeGroup', 'mode');
+
+  document.getElementById('generateBtn').addEventListener('click', generatePlaylist);
+  document.getElementById('copyThumbnailBtn').addEventListener('click', function() {
+    copyThumbnailImage(this);
+  });
+  document.getElementById('downloadThumbnailBtn').addEventListener('click', downloadThumbnail);
+
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.copy;
+      copyToClipboard(document.getElementById(id).innerText, this);
+    });
+  });
+
+  render(offlineGenerate('Midnight Rain', state.mood, state.tempo, state.vocal, '1시간'));
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
